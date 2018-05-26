@@ -39,15 +39,15 @@ class InvalidAggregationError(TypeError):
 class AggregationFunctionSet(object):
     def __init__(self):
         self.functions = {}
-        self.add('product', product_aggregation)
-        self.add('sum', sum_aggregation)
-        self.add('max', max_aggregation)
-        self.add('min', min_aggregation)
-        self.add('maxabs', max_abs_aggregation)
-        self.add('minabs', min_abs_aggregation)
-        self.add('mean', mean_aggregation)
+        self._add('product', product_aggregation)
+        self._add('sum', sum_aggregation)
+        self._add('max', max_aggregation)
+        self._add('min', min_aggregation)
+        self._add('maxabs', max_abs_aggregation)
+        self._add('minabs', min_abs_aggregation)
+        self._add('mean', mean_aggregation)
 
-    def add(self, name, func):
+    def _add(self, name, func):
         self.functions[name] = func
 
     def get(self, name):
