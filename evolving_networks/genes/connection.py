@@ -6,10 +6,11 @@
 [1] http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
 
 """
+import random
 
-from evolving_networks.errors import *
+from evolving_networks.errors import InvalidConfigurationError
 from evolving_networks.genes.gene import Gene
-from evolving_networks.initializers import *
+from evolving_networks.initializers import random_normal, random_uniform
 
 
 class Connection(Gene):
