@@ -13,6 +13,8 @@
 
 import math
 
+from evolving_networks.errors import *
+
 
 def identity_activation(z):
     return z
@@ -105,10 +107,6 @@ def abs_activation(z):
 
 def hat_activation(z):
     return max(0.0, 1 - abs(z))
-
-
-class InvalidActivationError(TypeError):
-    pass
 
 
 class ActivationFunctionSet(object):

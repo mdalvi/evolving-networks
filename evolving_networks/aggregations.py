@@ -1,6 +1,7 @@
 from functools import reduce
 from operator import mul
 
+from evolving_networks.errors import *
 from evolving_networks.math_util import mean
 
 
@@ -30,10 +31,6 @@ def min_aggregation(x):
 
 def mean_aggregation(x):
     return mean(x)
-
-
-class InvalidAggregationError(TypeError):
-    pass
 
 
 class AggregationFunctionSet(object):
