@@ -68,36 +68,37 @@ class Connection(Gene):
             raise InvalidConfigurationError()
 
         wmr = self.config.weight_mutate_rate
+        wms = self.config.weight_mutate_sigma
         wrr = self.config.weight_replace_rate
         emr = self.config.enabled_mutate_rate
-        mean = self.config.weight_init_mean
-        sigma = self.config.weight_init_sigma
-        min_value = self.config.weight_min_value
-        max_value = self.config.weight_max_value
+        wim = self.config.weight_init_mean
+        wis = self.config.weight_init_sigma
+        wmin = self.config.weight_min_value
+        wmax = self.config.weight_max_value
 
         if self.config.single_structural_mutation:
             mutate_rate = wmr + wrr + emr
             r = random.random()
             if r < wmr / mutate_rate:
-                self.weight = self._clamp(self.weight + random_normal(mean, sigma), min_value, max_value)
+                self.weight = self._clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
             elif r < (wmr + wrr) / mutate_rate:
                 if self.config.weight_init_type == 'normal':
-                    self.weight = self._clamp(random_normal(mean, sigma), min_value, max_value)
+                    self.weight = self._clamp(random_normal(wim, wis), wmin, wmax)
                 elif self.config.weight_init_type == 'uniform':
-                    self.weight = random_uniform(mean, sigma, min_value, max_value)
+                    self.weight = random_uniform(wim, wis, wmin, wmax)
                 else:
                     raise InvalidConfigurationError()
             else:
                 self.enabled = True if self.enabled is False else False
         else:
             if random.random() < wmr:
-                self.weight = self._clamp(self.weight + random_normal(mean, sigma), min_value, max_value)
+                self.weight = self._clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
 
             if random.random() < wrr:
                 if self.config.weight_init_type == 'normal':
-                    self.weight = self._clamp(random_normal(mean, sigma), min_value, max_value)
+                    self.weight = self._clamp(random_normal(wim, wis), wmin, wmax)
                 elif self.config.weight_init_type == 'uniform':
-                    self.weight = random_uniform(mean, sigma, min_value, max_value)
+                    self.weight = random_uniform(wim, wis, wmin, wmax)
                 else:
                     raise InvalidConfigurationError()
 

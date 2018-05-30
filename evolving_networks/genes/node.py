@@ -7,9 +7,11 @@
 
 """
 import random
+
 from evolving_networks.errors import InvalidConfigurationError
 from evolving_networks.genes.gene import Gene
 from evolving_networks.initializers import random_normal, random_uniform
+
 
 class Node(Gene):
     def __init__(self, node_id, type, bias, response, activation, aggregation, config=None):
@@ -49,34 +51,88 @@ class Node(Gene):
         rmax = getattr(self.config, 'response_max_value')
 
         act_mr = getattr(self.config, 'activation_mutate_rate')
+        act_opt = getattr(self.config, 'activation_options')
         agg_mr = getattr(self.config, 'aggregation_mutate_rate')
+        agg_opt = getattr(self.config, 'aggregation_options')
 
         if self.config.single_structural_mutation:
-
-            if self.config.single_structural_mutation:
-                mutate_rate = bmr + brr + rmr + rrr + act_mr + agg_mr
-                r = random.random()
-                if r < bmr / mutate_rate:
-                    self.bias = self._clamp(self.bias + random_normal(bim, bis), bmin, bmax)
-                elif r < (bmr + brr) / mutate_rate:
-                    if bit == 'normal':
-                        self.bias = self._clamp(random_normal(bim, bis), bmin, bmax)
-                    elif bit == 'uniform':
-                        self.bias = random_uniform(bim, bis, bmin, bmax)
-                    else:
-                        raise InvalidConfigurationError()
-                elif r < (bmr + brr + rmr):
-                    self.response = self._clamp(self.response + random_normal(rim, ris), rmin, rmax)
-                elif r < (bmr + brr + rmr + rrr):
-                    if rit == 'normal':
-                        self.response = self._clamp(random_normal(rim, ris), rmin, rmax)
-                    elif rit == 'uniform':
-                        self.response = random_uniform(rim, ris, rmin, rmax)
-                    else:
-                        raise InvalidConfigurationError()
-                elif r < (bmr + brr + rmr + rrr + act_mr):
-                    
+            mutate_rate = bmr + brr + rmr + rrr + act_mr + agg_mr
+            r = random.random()
+            if r < bmr / mutate_rate:
+                self.bias = self._clamp(self.bias + random_normal(0.0, bms), bmin, bmax)
+            elif r < (bmr + brr) / mutate_rate:
+                if bit == 'normal':
+                    self.bias = self._clamp(random_normal(bim, bis), bmin, bmax)
+                elif bit == 'uniform':
+                    self.bias = random_uniform(bim, bis, bmin, bmax)
+                else:
+                    raise InvalidConfigurationError()
+            elif r < (bmr + brr + rmr) / mutate_rate:
+                self.response = self._clamp(self.response + random_normal(0.0, rms), rmin, rmax)
+            elif r < (bmr + brr + rmr + rrr) / mutate_rate:
+                if rit == 'normal':
+                    self.response = self._clamp(random_normal(rim, ris), rmin, rmax)
+                elif rit == 'uniform':
+                    self.response = random_uniform(rim, ris, rmin, rmax)
+                else:
+                    raise InvalidConfigurationError()
+            elif r < (bmr + brr + rmr + rrr + act_mr) / mutate_rate:
+                # its better to keep act_mr = 0.0 if act_opt has only one choice
+                # you waste a probable chance if act_length > 1 is False and act_mr != 0.0
+                act_length = len(act_opt)
+                if act_length > 1:
+                    choices = list(range(act_length))
+                    choices.remove(act_opt.index(self.activation))
+                    choice_idx = random.choice(choices)
+                    self.activation = act_opt[choice_idx]
             else:
-                pass
+                # its better to keep agg_mr = 0.0 if agg_opt has only one choice
+                # you waste a probable chance if agg_length > 1 is False and agg_mr != 0.0
+                agg_length = len(agg_opt)
+                if agg_length > 1:
+                    choices = list(range(agg_length))
+                    choices.remove(agg_opt.index(self.aggregation))
+                    choice_idx = random.choice(choices)
+                    self.aggregation = agg_opt[choice_idx]
         else:
-            pass
+            if random.random() < bmr:
+                self.bias = self._clamp(self.bias + random_normal(0.0, bms), bmin, bmax)
+
+            if random.random() < brr:
+                if bit == 'normal':
+                    self.bias = self._clamp(random_normal(bim, bis), bmin, bmax)
+                elif bit == 'uniform':
+                    self.bias = random_uniform(bim, bis, bmin, bmax)
+                else:
+                    raise InvalidConfigurationError()
+
+            if random.random() < rmr:
+                self.response = self._clamp(self.response + random_normal(0.0, rms), rmin, rmax)
+
+            if random.random() < rrr:
+                if rit == 'normal':
+                    self.response = self._clamp(random_normal(rim, ris), rmin, rmax)
+                elif rit == 'uniform':
+                    self.response = random_uniform(rim, ris, rmin, rmax)
+                else:
+                    raise InvalidConfigurationError()
+
+            if random.random() < act_mr:
+                # its better to keep act_mr = 0.0 if act_opt has only one choice
+                # you waste a probable chance if act_length > 1 is False and act_mr != 0.0
+                act_length = len(act_opt)
+                if act_length > 1:
+                    choices = list(range(act_length))
+                    choices.remove(act_opt.index(self.activation))
+                    choice_idx = random.choice(choices)
+                    self.activation = act_opt[choice_idx]
+
+            if random.random() < agg_mr:
+                # its better to keep agg_mr = 0.0 if agg_opt has only one choice
+                # you waste a probable chance if agg_length > 1 is False and agg_mr != 0.0
+                agg_length = len(agg_opt)
+                if agg_length > 1:
+                    choices = list(range(agg_length))
+                    choices.remove(agg_opt.index(self.aggregation))
+                    choice_idx = random.choice(choices)
+                    self.aggregation = agg_opt[choice_idx]
