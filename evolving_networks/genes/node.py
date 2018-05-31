@@ -24,9 +24,19 @@ class Node(Gene):
         self.aggregation = aggregation
         self.config = config
 
-    def crossover(self, other_gene):
+    def crossover(self, other_node):
         if self.config is None:
             raise InvalidConfigurationError()
+
+        assert self.id == other_node.id  # [1][106,109]
+        assert self.type == other_node.type
+
+        bias = self.bias if random.random() < 0.5 else other_node.bias
+        response = self.response if random.random() < 0.5 else other_node.response
+        activation = self.activation if random.random() < 0.5 else other_node.activation
+        aggregation = self.aggregation if random.random() < 0.5 else other_node.aggregation
+        node = self.__class__(self.id, self.type, bias, response, activation, aggregation, self.config)
+        return node
 
     def mutate(self):
         if self.config is None:
