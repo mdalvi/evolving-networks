@@ -2,11 +2,14 @@ class Gene(object):
     def __init__(self):
         pass
 
+    def initialize(self, config):
+        raise NotImplementedError()
+
     def crossover(self, other_gene):
         raise NotImplementedError()
 
-    def mutate(self):
+    def mutate(self, config):
         raise NotImplementedError()
 
-    def _clamp(self, value, min_value, max_val):
-        return max(min(value, max_val), min_value)
+    def distance(self, other, config):
+        raise NotImplementedError()

@@ -11,80 +11,72 @@ import random
 from evolving_networks.errors import InvalidConfigurationError
 from evolving_networks.genes.gene import Gene
 from evolving_networks.initializers import random_normal, random_uniform
+from evolving_networks.math_util import clamp, normalize
 
 
 class Connection(Gene):
-    def __init__(self, innovation_id, source_id, target_id, weight=None, enabled=None, config=None):
-        """
-        weight_init_type
-        weight_init_mean
-        weight_init_sigma
-        weight_min_value
-        weight_max_value
-        enabled_default
-        weight_mutate_rate
-        weight_replace_rate
-        enabled_mutate_rate
-        single_structural_mutation
-        """
+    def __init__(self, c_id, source_id, target_id, weight=None, enabled=None):
         super(Connection, self).__init__()
-        self.config = config
-        self.innovation_id = innovation_id
+        self.id = c_id
         self.source_id = source_id
         self.target_id = target_id
+        self.weight = weight
+        self.enabled = enabled
 
-        if weight is None:
-            if self.config.weight_init_type == 'normal':
-                self.weight = self._clamp(random_normal(self.config.weight_init_mean, self.config.weight_init_sigma),
-                                          self.config.weight_min_value, self.config.weight_max_value)
-            elif self.config.weight_init_type == 'uniform':
-                self.weight = random_uniform(self.config.weight_init_mean, self.config.weight_init_sigma,
-                                             self.config.weight_min_value, self.config.weight_max_value)
-            else:
-                raise InvalidConfigurationError()
+    def initialize(self, config):
+        wit = config.weight_init_type
+        wim = config.weight_init_mean
+        wis = config.weight_init_stdev
+        wmin = config.weight_min_value
+        wmax = config.weight_max_value
+
+        if wit == 'normal':
+            self.weight = clamp(random_normal(wim, wis), wmin, wmax)
+        elif wit == 'uniform':
+            self.weight = random_uniform(wim, wis, wmin, wmax)
         else:
-            self.weight = weight
-
-        if enabled is None:
-            self.enabled = self.config.enabled_default
-        else:
-            self.enabled = enabled
-
-    def crossover(self, other_connection):
-        if self.config is None:
             raise InvalidConfigurationError()
 
+        self.enabled = config.enabled_default
+
+    def distance(self, other_connection, config):
+        wmin = config.weight_min_value
+        wmax = config.weight_max_value
+        wdiff_min, wdiff_max = 0.0, abs(wmin - wmax)
+        wdiff = normalize(wdiff_min, wdiff_max, abs(self.weight - other_connection.weight), 0.0, 1.0)
+        ediff = 0.0 if self.enabled == other_connection.enabled else 1.0
+        return normalize(0.0, 2.0, wdiff + ediff, 0.0, 1.0) * config.compatibility_weight_contribution
+
+    def crossover(self, other_connection):
+        assert self.id == other_connection.id  # [1][106,109]
         assert self.source_id == other_connection.source_id  # [1][106,109]
         assert self.target_id == other_connection.target_id  # [1][106,109]
-        assert self.innovation_id == other_connection.innovation_id  # [1][106,109]
 
         weight = self.weight if random.random() < 0.5 else other_connection.weight
         enabled = self.enabled if random.random() < 0.5 else other_connection.enabled
-        connection = self.__class__(self.innovation_id, self.source_id, self.target_id, weight, enabled, self.config)
+        connection = self.__class__(self.id, self.source_id, self.target_id, weight, enabled)
         return connection
 
-    def mutate(self):
-        if self.config is None:
-            raise InvalidConfigurationError()
+    def mutate(self, config):
+        wmr = config.weight_mutate_rate
+        wms = config.weight_mutate_stdev
+        wrr = config.weight_replace_rate
+        emr = config.enabled_mutate_rate
+        wim = config.weight_init_mean
+        wis = config.weight_init_stdev
+        wit = config.weight_init_type
+        wmin = config.weight_min_value
+        wmax = config.weight_max_value
 
-        wmr = self.config.weight_mutate_rate
-        wms = self.config.weight_mutate_sigma
-        wrr = self.config.weight_replace_rate
-        emr = self.config.enabled_mutate_rate
-        wim = self.config.weight_init_mean
-        wis = self.config.weight_init_sigma
-        wmin = self.config.weight_min_value
-        wmax = self.config.weight_max_value
-
-        if self.config.single_structural_mutation:
+        if config.single_structural_mutation:
             mutate_rate = wmr + wrr + emr
             r = random.random()
             if r < wmr / mutate_rate:
-                self.weight = self._clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
+                self.weight = clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
             elif r < (wmr + wrr) / mutate_rate:
-                if self.config.weight_init_type == 'normal':
-                    self.weight = self._clamp(random_normal(wim, wis), wmin, wmax)
-                elif self.config.weight_init_type == 'uniform':
+                if wit == 'normal':
+                    self.weight = clamp(random_normal(wim, wis), wmin, wmax)
+                elif wit == 'uniform':
                     self.weight = random_uniform(wim, wis, wmin, wmax)
                 else:
                     raise InvalidConfigurationError()
@@ -92,12 +84,12 @@ class Connection(Gene):
                 self.enabled = True if self.enabled is False else False
         else:
             if random.random() < wmr:
-                self.weight = self._clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
+                self.weight = clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
 
             if random.random() < wrr:
-                if self.config.weight_init_type == 'normal':
-                    self.weight = self._clamp(random_normal(wim, wis), wmin, wmax)
-                elif self.config.weight_init_type == 'uniform':
+                if wit == 'normal':
+                    self.weight = clamp(random_normal(wim, wis), wmin, wmax)
+                elif wit == 'uniform':
                     self.weight = random_uniform(wim, wis, wmin, wmax)
                 else:
                     raise InvalidConfigurationError()

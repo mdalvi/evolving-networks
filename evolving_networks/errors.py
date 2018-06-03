@@ -8,3 +8,7 @@ class InvalidActivationError(KeyError):
 
 class InvalidConfigurationError(TypeError):
     pass
+
+
+class InvalidConfigurationFile(IOError):
+    pass
