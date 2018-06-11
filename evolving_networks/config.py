@@ -56,6 +56,19 @@ class Config(object):
 
         self.genome = DefaultGenomeConfig(config_parser)
 
+        if not config_parser.has_section('DefaultSpecies'):
+            raise configparser.NoSectionError("NO SUCH 'DefaultSpecies' SECTION FOUND IN CONFIGURATION FILE")
+
+        self.species = DefaultSpeciesConfig(config_parser)
+
+
+class DefaultSpeciesConfig(object):
+    __params = [ConfigParameter('compatibility_threshold', float)]
+
+    def __init__(self, config_parser):
+        for parameter in self.__params:
+            setattr(self, parameter.name, parameter.parse('DefaultSpecies', config_parser))
+
 
 class DefaultGenomeConfig(object):
     __params = [ConfigParameter('num_inputs', int), ConfigParameter('num_hidden', int),
