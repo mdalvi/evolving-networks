@@ -39,6 +39,7 @@ class Genome(object):
             node_distance += normalize(0.0, nb_max_nodes, len(disjoint_excess_nodes), 0.0,
                                        1.0) * config.node.compatibility_disjoint_contribution
             node_distance = node_distance / 2.0
+            assert 0.0 <= node_distance <= 1.0
 
         if self.connections or other_genome.connections:
             nb_max_connections = max(len(self.connections), len(other_genome.connections))
@@ -54,8 +55,11 @@ class Genome(object):
             connection_distance += normalize(0.0, nb_max_connections, len(disjoint_excess_connections), 0.0,
                                              1.0) * config.connection.compatibility_disjoint_contribution
             connection_distance = connection_distance / 2.0
+            assert 0.0 <= connection_distance <= 1.0
 
-        return (node_distance + connection_distance) / 2.0
+        genomic_distance = (node_distance + connection_distance) / 2.0
+        assert 0.0 <= genomic_distance <= 1.0
+        return genomic_distance
 
     def initialize(self, node_config, connection_config):
         for _ in range(self.config.num_inputs):

@@ -12,3 +12,7 @@ class InvalidConfigurationError(TypeError):
 
 class InvalidConfigurationFile(IOError):
     pass
+
+
+class InvalidAttributeValueError(AttributeError):
+    pass
