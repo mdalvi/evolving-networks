@@ -20,9 +20,6 @@ class Genome(object):
         self.output_keys = set()
         self._node_indexer = count(0)
 
-    def vector(self):
-        pass
-
     def distance(self, other_genome, config):
         node_distance, connection_distance = 0.0, 0.0
         if self.nodes or other_genome.nodes:

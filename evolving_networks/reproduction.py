@@ -8,7 +8,7 @@ class Reproduction(object):
         self.ancestors = set()
         self._genome_indexer = count(0)
 
-    def init_population(self, population_size, config):
+    def initialize_population(self, population_size, config):
         population = dict()
         for _ in range(population_size):
             g_id = next(self._genome_indexer)
