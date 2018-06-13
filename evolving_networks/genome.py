@@ -8,6 +8,9 @@ from evolving_networks.math_util import normalize
 
 
 class Genome(object):
+    _innovation_indexer = count(0)
+    _innovation_archive = {}
+
     def __init__(self, g_id, config):
         self.id = g_id
         self.nodes = {}
@@ -80,40 +83,34 @@ class Genome(object):
         if self.config.initial_connection == 'fs_neat_no_hidden':
             source_id = random.choice(self.input_keys)
             for target_id in self.output_keys:
-                assert (source_id, target_id) not in self.connections
-                self._create_connection((source_id, target_id), source_id, target_id, connection_config)
+                self._create_connection(source_id, target_id, connection_config)
 
         elif self.config.initial_connection == 'fs_neat_hidden':
             source_id = random.choice(self.input_keys)
             for target_id in set().union(self.hidden_keys, self.output_keys):
-                assert (source_id, target_id) not in self.connections
-                self._create_connection((source_id, target_id), source_id, target_id, connection_config)
+                self._create_connection(source_id, target_id, connection_config)
 
         elif self.config.initial_connection == 'full_no_direct':
             for source_id, target_id in self._compute_full_connectors(False):
-                assert (source_id, target_id) not in self.connections
-                self._create_connection((source_id, target_id), source_id, target_id, connection_config)
+                self._create_connection(source_id, target_id, connection_config)
 
         elif self.config.initial_connection == 'full_direct':
             for source_id, target_id in self._compute_full_connectors(True):
-                assert (source_id, target_id) not in self.connections
-                self._create_connection((source_id, target_id), source_id, target_id, connection_config)
+                self._create_connection(source_id, target_id, connection_config)
 
         elif self.config.initial_connection == 'partial_no_direct':
             connectors = self._compute_full_connectors(False)
             random.shuffle(connectors)
             connections_to_add = int(round(len(connectors) * self.config.partial_connection_rate))
             for source_id, target_id in connectors[:connections_to_add]:
-                assert (source_id, target_id) not in self.connections
-                self._create_connection((source_id, target_id), source_id, target_id, connection_config)
+                self._create_connection(source_id, target_id, connection_config)
 
         elif self.config.initial_connection == 'partial_direct':
             connectors = self._compute_full_connectors(True)
             random.shuffle(connectors)
             connections_to_add = int(round(len(connectors) * self.config.partial_connection_rate))
             for source_id, target_id in connectors[:connections_to_add]:
-                assert (source_id, target_id) not in self.connections
-                self._create_connection((source_id, target_id), source_id, target_id, connection_config)
+                self._create_connection(source_id, target_id, connection_config)
 
         elif self.config.initial_connection == 'unconnected':
             pass
@@ -149,7 +146,14 @@ class Genome(object):
         node.initialize(config)
         self.nodes[n_id] = node
 
-    def _create_connection(self, c_id, source_id, target_id, config):
+    def _create_connection(self, source_id, target_id, config):
+        if (source_id, target_id) in self.__class__._innovation_archive:
+            c_id = self.__class__._innovation_archive[(source_id, target_id)]
+        else:
+            c_id = next(self.__class__._innovation_indexer)
+            self.__class__._innovation_archive[(source_id, target_id)] = c_id
+
+        assert c_id not in self.connections
         connection = Connection(c_id, source_id, target_id)
         connection.initialize(config)
         self.connections[c_id] = connection

@@ -7,3 +7,9 @@ class Factory(object):
 
     def populate(self, population_size, config):
         raise NotImplementedError()
+
+    def reproduce(self, species, population_size, generation, config):
+        pass
+
+    def _stagnation(self, species, generation):
+        pass

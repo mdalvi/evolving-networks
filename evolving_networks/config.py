@@ -63,7 +63,8 @@ class Config(object):
 
 
 class DefaultSpeciesConfig(object):
-    __params = [ConfigParameter('compatibility_threshold', float)]
+    __params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
+                ConfigParameter('max_stagnation', int), ConfigParameter('elitism', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:

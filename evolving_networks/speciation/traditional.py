@@ -5,7 +5,7 @@ from evolving_networks.speciation.species import Species
 
 class Traditional(Factory):
     def __init__(self):
-        super(Factory, self).__init__()
+        super(Traditional, self).__init__()
         self.species = dict()
         self._genome_to_species = {}
 
@@ -16,6 +16,7 @@ class Traditional(Factory):
         unspeciated = set(population.keys())
         representatives, members = {}, {}
 
+        # TODO: Optimize here
         # Because we are looping over species and removing close candidates from unspeciated, this method may not give optimal replacements for given representatives.
         for specie_id, specie in self.species.items():
             specie_distances = []
@@ -53,7 +54,7 @@ class Traditional(Factory):
         for specie_id, representative_id in representatives.items():
             s = self.species.get(specie_id)
             if s is None:
-                s = Species(specie_id, generation)
+                s = Species(specie_id, generation, config.species)
 
             specie_members ={}
             for genome_id in members[specie_id]:
