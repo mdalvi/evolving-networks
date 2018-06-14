@@ -18,6 +18,7 @@ class Genome(object):
         self.fitness = None
         self.config = config
 
+        self.all_keys = set()
         self.input_keys = set()
         self.hidden_keys = set()
         self.output_keys = set()
@@ -43,8 +44,8 @@ class Genome(object):
 
         if self.connections or other_genome.connections:
             nb_max_connections = max(len(self.connections), len(other_genome.connections))
-            matching_connections = list(set(self.connections.keys()) & set(other_genome.nodes.keys()))
-            disjoint_excess_connections = list(set(self.connections.keys()) ^ set(other_genome.nodes.keys()))
+            matching_connections = list(set(self.connections.keys()) & set(other_genome.connections.keys()))
+            disjoint_excess_connections = list(set(self.connections.keys()) ^ set(other_genome.connections.keys()))
 
             for c_id in matching_connections:
                 connection_distance += self.connections[c_id].distance(other_genome.connections[c_id],
@@ -67,18 +68,21 @@ class Genome(object):
             assert n_id not in self.nodes
             self._create_node(n_id, 'input', node_config)
             self.input_keys.add(n_id)
+            self.all_keys.add(n_id)
 
         for _ in range(self.config.num_hidden):
             n_id = next(self._node_indexer)
             assert n_id not in self.nodes
             self._create_node(n_id, 'hidden', node_config)
             self.hidden_keys.add(n_id)
+            self.all_keys.add(n_id)
 
         for _ in range(self.config.num_outputs):
             n_id = next(self._node_indexer)
             assert n_id not in self.nodes
             self._create_node(n_id, 'output', node_config)
             self.output_keys.add(n_id)
+            self.all_keys.add(n_id)
 
         if self.config.initial_connection == 'fs_neat_no_hidden':
             source_id = random.choice(self.input_keys)
