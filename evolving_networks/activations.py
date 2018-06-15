@@ -13,7 +13,7 @@
 
 import math
 
-from evolving_networks.errors import *
+from evolving_networks.errors import InvalidActivationError
 
 
 def identity_activation(z):

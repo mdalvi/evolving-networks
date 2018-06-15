@@ -2,8 +2,8 @@ import random
 from itertools import count
 
 from evolving_networks.errors import InvalidConfigurationError
-from evolving_networks.genes.connection import Connection
-from evolving_networks.genes.node import Node
+from evolving_networks.genome.genes.connection import Connection
+from evolving_networks.genome.genes.node import Node
 from evolving_networks.math_util import normalize
 
 

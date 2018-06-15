@@ -1,7 +1,7 @@
 from functools import reduce
 from operator import mul
 
-from evolving_networks.errors import *
+from evolving_networks.errors import InvalidAggregationError
 from evolving_networks.math_util import mean
 
 

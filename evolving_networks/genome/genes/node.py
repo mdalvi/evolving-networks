@@ -9,7 +9,7 @@
 import random
 
 from evolving_networks.errors import InvalidConfigurationError
-from evolving_networks.genes.gene import Gene
+from evolving_networks.genome.genes.gene import Gene
 from evolving_networks.initializers import random_normal, random_uniform
 from evolving_networks.math_util import clamp, normalize
 

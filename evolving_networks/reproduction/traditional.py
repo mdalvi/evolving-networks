@@ -1,4 +1,4 @@
-from evolving_networks.genome import Genome
+from evolving_networks.genome.genome import Genome
 from evolving_networks.reproduction.factory import Factory
 
 
