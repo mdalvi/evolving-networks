@@ -1,5 +1,5 @@
-from evolving_networks.activation.activation import Activation
-from evolving_networks.activation.inverse_square_root_unit import InverseSquareRootUnit
+from evolving_networks.activations.activation import Activation
+from evolving_networks.activations.inverse_square_root_unit import InverseSquareRootUnit
 
 
 class InverseSquareRootLinearUnit(Activation):

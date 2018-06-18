@@ -1,16 +1,16 @@
 import math
 
-from evolving_networks.activation.activation import Activation
+from evolving_networks.activations.activation import Activation
 
 
-class Tanh(Activation):
+class Exp(Activation):
     midpoint = 0.0
 
     def __init__(self):
-        super(Tanh, self).__init__()
+        super(Exp, self).__init__()
         pass
 
     @classmethod
     def activate(cls, z):
-        result = math.tanh(z)
+        result = math.exp(z)
         return result, result > cls.midpoint

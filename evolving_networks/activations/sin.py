@@ -1,16 +1,16 @@
 import math
 
-from evolving_networks.activation.activation import Activation
+from evolving_networks.activations.activation import Activation
 
 
-class Exp(Activation):
+class Sin(Activation):
     midpoint = 0.0
 
     def __init__(self):
-        super(Exp, self).__init__()
+        super(Sin, self).__init__()
         pass
 
     @classmethod
     def activate(cls, z):
-        result = math.exp(z)
+        result = math.sin(z)
         return result, result > cls.midpoint

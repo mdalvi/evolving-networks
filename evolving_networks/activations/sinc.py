@@ -8,7 +8,7 @@
 """
 import math
 
-from evolving_networks.activation.activation import Activation
+from evolving_networks.activations.activation import Activation
 
 
 class Sinc(Activation):

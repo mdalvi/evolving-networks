@@ -7,8 +7,8 @@
 [2] https://github.com/keras-team/keras/blob/master/keras/activations.py
 
 """
-from evolving_networks.activation.activation import Activation
-from evolving_networks.activation.elu import Elu
+from evolving_networks.activations.activation import Activation
+from evolving_networks.activations.elu import Elu
 
 
 class Selu(Activation):
