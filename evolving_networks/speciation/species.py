@@ -1,5 +1,4 @@
-from evolving_networks.errors import InvalidAttributeValueError
-from evolving_networks.math_util import stat_functions
+from evolving_networks.math_util import stat_functions, mean
 
 
 class Species(object):
@@ -8,8 +7,8 @@ class Species(object):
         self.created = generation
         self.last_improved = generation
 
-        self._members = None
-        self._representative = None
+        self.members = None
+        self.representative = None
         self.fitness_history = []
         self.is_stagnant = False
         self.adjusted_fitness = None
@@ -17,27 +16,8 @@ class Species(object):
 
     @property
     def fitness(self):
-        if self.fitness_criterion is None:
-            raise InvalidAttributeValueError('NO FITNESS CRITERION FOUND FOR SPECIES [{}]'.format(self.specie_id))
-
         return self.fitness_criterion([genome.fitness for genome in self.members.values()])
 
     @property
-    def representative(self):
-        if self._representative is None:
-            raise InvalidAttributeValueError('NO REPRESENTATIVE FOUND FOR SPECIES [{}]'.format(self.specie_id))
-        return self._representative
-
-    @representative.setter
-    def representative(self, value):
-        self._representative = value
-
-    @property
-    def members(self):
-        if self._members is None:
-            raise InvalidAttributeValueError('NO MEMBERS FOUND FOR SPECIES [{}]'.format(self.specie_id))
-        return self._members
-
-    @members.setter
-    def members(self, value):
-        self._members = value
+    def fitness_mean(self):
+        return mean([genome.fitness for genome in self.members.values()])

@@ -1,4 +1,5 @@
 from evolving_networks.genome.genome import Genome
+from evolving_networks.math_util import normalize
 from evolving_networks.reproduction.factory import Factory
 
 
@@ -37,6 +38,8 @@ class Traditional(Factory):
         # Sort in ascending fitness order.
         species_data.sort(key=lambda x: x[2])
 
+        nb_members = []
+        non_stagnant_fitness = []
         nb_non_stagnants = len(species_data)
         for (specie_id, specie, _) in species_data:
             is_stagnant = False
@@ -50,5 +53,27 @@ class Traditional(Factory):
 
             specie.is_stagnant = is_stagnant
 
-        print('stagnation successful')
+            if not is_stagnant:
+                nb_members.append(len(specie.members))
+                non_stagnant_fitness.extend(member.fitness for member in specie.members.values())
 
+        assert nb_non_stagnants >= config.species.elitism
+
+        if not non_stagnant_fitness:
+            species = {}
+            return {}
+
+        min_fitness = min(non_stagnant_fitness)
+        max_fitness = max(non_stagnant_fitness)
+
+        if min_fitness == max_fitness:
+            min_fitness, max_fitness = 0.0, 1.0
+
+        adjusted_fitness = []
+        for (specie_id, specie, _) in species_data:
+            specie_fitness_mean = specie.fitness_mean
+            specie.adjusted_fitness = normalize(min_fitness, max_fitness, specie_fitness_mean, 0.0, 1.0)
+
+
+        min_species_size = max(config.species.min_species_size, config.reproduction.elitism)
+        spawn_amounts = self.compute_spawn(adjusted_fitness, nb_members, population_size, min_species_size)

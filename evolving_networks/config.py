@@ -61,10 +61,24 @@ class Config(object):
 
         self.species = DefaultSpeciesConfig(config_parser)
 
+        if not config_parser.has_section('DefaultReproduction'):
+            raise configparser.NoSectionError("NO SUCH 'DefaultReproduction' SECTION FOUND IN CONFIGURATION FILE")
+
+        self.reproduction = DefaultReproductionConfig(config_parser)
+
+
+class DefaultReproductionConfig(object):
+    __params = [ConfigParameter('elitism', int)]
+
+    def __init__(self, config_parser):
+        for parameter in self.__params:
+            setattr(self, parameter.name, parameter.parse('DefaultReproduction', config_parser))
+
 
 class DefaultSpeciesConfig(object):
     __params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
-                ConfigParameter('max_stagnation', int), ConfigParameter('elitism', int)]
+                ConfigParameter('max_stagnation', int), ConfigParameter('elitism', int),
+                ConfigParameter('min_species_size', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
