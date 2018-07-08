@@ -10,6 +10,10 @@ class InvalidConfigurationError(TypeError):
     pass
 
 
+class InvalidSpecieAttribute(AttributeError):
+    pass
+
+
 class InvalidConfigurationFile(IOError):
     pass
 

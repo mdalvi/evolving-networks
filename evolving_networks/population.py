@@ -16,14 +16,14 @@ class Population(object):
 
         self.fitness_criterion = stat_functions.get(config.neat.fitness_criterion)
         if self.fitness_criterion is None and not config.neat.no_fitness_termination:
-            raise RuntimeError('UNEXPECTED FITNESS CRITERION [{}]'.format(config.neat.fitness_criterion))
+            raise RuntimeError('Unexpected fitness criterion [{}]'.format(config.neat.fitness_criterion))
 
-        self.population = self.reproduction.populate(config.neat.population_size, config)
+        self.population = self.reproduction.populate(config.neat.population_size, self.generation, config)
         self.speciation.speciate(self.population, self.generation, config)
 
     def fit(self, fitness_function, config, n=None):
         if config.neat.no_fitness_termination and (n is None):
-            raise RuntimeError('CANNOT HAVE NO GENERATIONAL LIMIT WITH NO FITNESS TERMINATION')
+            raise RuntimeError('Cannot have no generational limit with no fitness termination')
 
         k = 0
         while n is None or k < n:
@@ -41,5 +41,8 @@ class Population(object):
                 if fv >= config.neat.fitness_threshold:
                     break
 
+            self.speciation.sort_specie_genomes()
+            self.speciation.calc_best_stats()
+            self.speciation.calc_specie_stats(config)
             self.population = self.reproduction.reproduce(self.speciation.species, config.neat.population_size,
                                                           self.generation, config)

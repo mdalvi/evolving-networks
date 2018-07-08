@@ -1,4 +1,17 @@
-from evolving_networks.math_util import stat_functions, mean
+from evolving_networks.math_util import stat_functions
+
+
+class SpeciesStatistics(object):
+    def __init__(self):
+        self.fitness = 0.0
+        self.fitness_mean = 0.0
+        self.adjusted_fitness = 0.0
+        self.target_size_float = 0.0
+        self.target_size = 0
+        self.elite_size = 0
+        self.off_spring_count = 0
+        self.off_spring_asexual_count = 0
+        self.off_spring_sexual_count = 0
 
 
 class Species(object):
@@ -6,18 +19,8 @@ class Species(object):
         self.specie_id = specie_id
         self.created = generation
         self.last_improved = generation
-
-        self.members = None
-        self.representative = None
-        self.fitness_history = []
-        self.is_stagnant = False
-        self.adjusted_fitness = None
         self.fitness_criterion = stat_functions.get(config.fitness_criterion)
 
-    @property
-    def fitness(self):
-        return self.fitness_criterion([genome.fitness for genome in self.members.values()])
-
-    @property
-    def fitness_mean(self):
-        return mean([genome.fitness for genome in self.members.values()])
+        self.members = []
+        self.representative = None
+        self.fitness_history = []

@@ -5,6 +5,15 @@ class Factory(object):
     def __init__(self):
         self._specie_indexer = count(0)
 
+    def sort_specie_genomes(self):
+        raise NotImplementedError()
+
+    def calc_best_stats(self):
+        raise NotImplementedError()
+
+    def calc_specie_stats(self, config):
+        raise NotImplementedError()
+
     def speciate(self, population, generation, config):
         raise NotImplementedError()
 

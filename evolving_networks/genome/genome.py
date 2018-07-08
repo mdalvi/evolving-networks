@@ -11,18 +11,40 @@ class Genome(object):
     _innovation_indexer = count(0)
     _innovation_archive = {}
 
-    def __init__(self, g_id, config):
+    def __init__(self, g_id, generation, config):
         self.id = g_id
+        self.config = config
+        self.birth_generation = generation
+
         self.nodes = {}
         self.connections = {}
-        self.fitness = None
-        self.config = config
+        self.fitness = 0.0
 
         self.all_keys = set()
         self.input_keys = set()
         self.hidden_keys = set()
         self.output_keys = set()
         self._node_indexer = count(0)
+
+    def __lt__(self, other):
+        if self.fitness == other.fitness:
+            return self.birth_generation < other.birth_generation
+        return self.fitness < other.fitness
+
+    def __le__(self, other):
+        if self.fitness == other.fitness:
+            return self.birth_generation <= other.birth_generation
+        return self.fitness <= other.fitness
+
+    def __gt__(self, other):
+        if self.fitness == other.fitness:
+            return self.birth_generation > other.birth_generation
+        return self.fitness > other.fitness
+
+    def __ge__(self, other):
+        if self.fitness == other.fitness:
+            return self.birth_generation >= other.birth_generation
+        return self.fitness >= other.fitness
 
     def distance(self, other_genome, config):
         node_distance, connection_distance = 0.0, 0.0
