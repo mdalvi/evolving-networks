@@ -19,6 +19,7 @@ class Genome(object):
         self.nodes = {}
         self.connections = {}
         self.fitness = 0.0
+        self.adjusted_fitness = 0.0
 
         self.all_keys = set()
         self.input_keys = set()

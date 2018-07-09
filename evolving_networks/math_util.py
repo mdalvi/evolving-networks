@@ -18,7 +18,7 @@ def normalize(act_min, act_max, val, norm_min=-1.0, norm_max=1.0):
 def probabilistic_round(value):
     integer_part = math.floor(value)
     fractional_part = value - integer_part
-    return integer_part + 1.0 if random.random() < fractional_part else integer_part + 0.0
+    return int(integer_part + 1.0 if random.random() < fractional_part else integer_part)
 
 
 stat_functions = {'min': min, 'max': max, 'mean': mean}

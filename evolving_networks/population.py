@@ -1,5 +1,4 @@
-from evolving_networks.math_util import stat_functions
-
+from evolving_networks.math_util import stat_functions, normalize
 
 class Population(object):
     def __init__(self, reproduction, speciation):
@@ -41,6 +40,16 @@ class Population(object):
                 if fv >= config.neat.fitness_threshold:
                     break
 
+            population_fitness = [member.fitness for member in self.population.values()]
+            min_fitness, max_fitness = min(population_fitness), max(population_fitness)
+            if min_fitness == max_fitness:
+                for member in self.population.values():
+                    member.adjusted_fitness = 0.0
+            else:
+                for member in self.population.values():
+                    member.adjusted_fitness = normalize(min_fitness, max_fitness, member.fitness, 0.0, 1.0)
+
+            self.speciation.reset_specie_stats()
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
             self.speciation.calc_specie_stats(config)

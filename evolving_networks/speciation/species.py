@@ -1,19 +1,6 @@
 from evolving_networks.math_util import stat_functions
 
 
-class SpeciesStatistics(object):
-    def __init__(self):
-        self.fitness = 0.0
-        self.fitness_mean = 0.0
-        self.adjusted_fitness = 0.0
-        self.target_size_float = 0.0
-        self.target_size = 0
-        self.elite_size = 0
-        self.off_spring_count = 0
-        self.off_spring_asexual_count = 0
-        self.off_spring_sexual_count = 0
-
-
 class Species(object):
     def __init__(self, specie_id, generation, config):
         self.specie_id = specie_id
@@ -24,3 +11,25 @@ class Species(object):
         self.members = []
         self.representative = None
         self.fitness_history = []
+
+        self.fitness = 0.0
+        self.fitness_mean = 0.0
+
+        self.target_size_float = 0.0
+        self.target_size = 0
+        self.elite_size = 0
+        self.off_springs = 0
+        self.off_spring_asexual = 0
+        self.off_spring_sexual = 0
+        self.selection_size = 0
+
+    def reset_stats(self):
+        self.fitness = 0.0
+        self.fitness_mean = 0.0
+        self.target_size_float = 0.0
+        self.target_size = 0
+        self.elite_size = 0
+        self.off_springs = 0
+        self.off_spring_asexual = 0
+        self.off_spring_sexual = 0
+        self.selection_size = 0
