@@ -14,7 +14,7 @@ class Traditional(Factory):
         self.species = {}
         self._genome_to_species = {}
         self.best_genome = None
-        self.best_fitness = float('-Infinity')
+        self.best_adjusted_fitness = float('-Infinity')
         self.best_specie_idx = None
         self.min_specie_size = float('+Infinity')
         self.max_specie_size = float('-Infinity')
@@ -36,17 +36,17 @@ class Traditional(Factory):
     def calc_best_stats(self):
 
         best_genome = None
-        best_fitness = float('-Infinity')
+        best_adjusted_fitness = float('-Infinity')
         best_specie_idx = None
 
         for s_id, specie in self.species.items():
-            if specie.members[0].fitness > best_fitness:
+            if specie.members[0].adjusted_fitness > best_adjusted_fitness:
                 best_genome = specie.members[0]
-                best_fitness = specie.members[0].fitness
+                best_adjusted_fitness = specie.members[0].adjusted_fitness
                 best_specie_idx = s_id
 
         self.best_genome = best_genome
-        self.best_fitness = best_fitness
+        self.best_adjusted_fitness = best_adjusted_fitness
         self.best_specie_idx = best_specie_idx
 
     def calc_specie_stats(self, config):
@@ -55,10 +55,10 @@ class Traditional(Factory):
 
         for specie in self.species.values():
             members_fitness = [member.adjusted_fitness for member in specie.members.values()]
-            specie.fitness = specie.fitness_criterion(members_fitness)
-            specie.fitness_mean = mean(members_fitness)
+            specie.adjusted_fitness = specie.fitness_criterion(members_fitness)
+            specie.adjusted_fitness_mean = mean(members_fitness)
 
-            mean_fitness_sum += specie.fitness_mean
+            mean_fitness_sum += specie.adjusted_fitness_mean
 
         if mean_fitness_sum == 0.0:
             target_size_float = config.neat.population_size / len(self.species)
@@ -68,7 +68,7 @@ class Traditional(Factory):
                 target_size_sum += specie.target_size
         else:
             for s_id, specie in self.species.items():
-                specie.target_size_float = (specie.fitness_mean / mean_fitness_sum) * config.neat.population_size
+                specie.target_size_float = (specie.adjusted_fitness_mean / mean_fitness_sum) * config.neat.population_size
                 target_size = probabilistic_round(specie.target_size_float)
                 if target_size == 0 and s_id == self.best_specie_idx:
                     target_size = 1
@@ -81,7 +81,7 @@ class Traditional(Factory):
                 self.species[self.best_specie_idx].target_size += 1
             else:
                 specie_idxs = list(self.species.keys())
-                for _ in range(target_size_delta * -1):
+                for _ in range(abs(target_size_delta)):
                     probabilities = np.array([max(0.0, specie.target_size_float - specie.target_size) for specie in
                                               self.species.values()])
                     probabilities = probabilities / np.sum(probabilities)

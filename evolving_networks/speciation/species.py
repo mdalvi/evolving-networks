@@ -12,8 +12,8 @@ class Species(object):
         self.representative = None
         self.fitness_history = []
 
-        self.fitness = 0.0
-        self.fitness_mean = 0.0
+        self.adjusted_fitness = 0.0
+        self.adjusted_fitness_mean = 0.0
 
         self.target_size_float = 0.0
         self.target_size = 0
@@ -24,8 +24,8 @@ class Species(object):
         self.selection_size = 0
 
     def reset_stats(self):
-        self.fitness = 0.0
-        self.fitness_mean = 0.0
+        self.adjusted_fitness = 0.0
+        self.adjusted_fitness_mean = 0.0
         self.target_size_float = 0.0
         self.target_size = 0
         self.elite_size = 0

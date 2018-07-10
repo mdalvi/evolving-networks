@@ -19,6 +19,9 @@ class Traditional(Factory):
             self.ancestors.add(genome_id)
         return population
 
+    def reproduce_off_springs(self, species):
+        pass
+
     def reproduce(self, species, population_size, generation, config):
         species_data = []
         for specie_id, specie in species.items():
@@ -76,4 +79,4 @@ class Traditional(Factory):
 
 
         min_species_size = max(config.species.min_species_size, config.reproduction.elitism)
-        spawn_amounts = self.compute_spawn(adjusted_fitness, nb_members, population_size, min_species_size)
+        # spawn_amounts = self.compute_spawn(adjusted_fitness, nb_members, population_size, min_species_size)
