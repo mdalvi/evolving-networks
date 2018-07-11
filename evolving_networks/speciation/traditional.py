@@ -54,7 +54,8 @@ class Traditional(Factory):
         mean_fitness_sum = 0.0
 
         for specie in self.species.values():
-            members_fitness = [member.adjusted_fitness for member in specie.members.values()]
+            members_fitness = [member.adjusted_fitness for member in specie.members]
+            specie.members_fitness = members_fitness
             specie.adjusted_fitness = specie.fitness_criterion(members_fitness)
             specie.adjusted_fitness_mean = mean(members_fitness)
 
@@ -101,20 +102,20 @@ class Traditional(Factory):
 
         for s_id, specie in self.species.items():
             if specie.target_size == 0:
-                specie.elite_size = 0
+                specie.elites = 0
                 continue
 
-            elite_size = probabilistic_round(len(specie.members) * config.species.elitism)
-            specie.elite_size = min(elite_size, specie.target_size)
+            elites = probabilistic_round(len(specie.members) * config.species.elitism)
+            specie.elites = min(elites, specie.target_size)
 
-            if s_id == self.best_specie_idx and elite_size == 0:
-                specie.elite_size = 1
+            if s_id == self.best_specie_idx and elites == 0:
+                specie.elites = 1
 
-            specie.off_springs = specie.target_size - specie.elite_size
+            specie.off_springs = specie.target_size - specie.elites
             specie.off_spring_asexual = probabilistic_round(specie.off_springs * config.species.off_spring_asexual)
             specie.off_spring_sexual = specie.off_springs - specie.off_spring_asexual
 
-            specie.selection_size = probabilistic_round(len(specie.members) * config.species.selection)
+            specie.survivors = probabilistic_round(len(specie.members) * config.species.survivor_rate)
 
     def speciate(self, population, generation, config):
 

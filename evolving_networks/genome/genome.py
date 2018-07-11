@@ -47,6 +47,12 @@ class Genome(object):
             return self.birth_generation >= other.birth_generation
         return self.fitness >= other.fitness
 
+    def crossover_asexual(self, parent_1, config):
+        pass
+
+    def crossover_sexual(self, parent_1, parent_2, config):
+        pass
+
     def distance(self, other_genome, config):
         node_distance, connection_distance = 0.0, 0.0
         if self.nodes or other_genome.nodes:
@@ -184,9 +190,6 @@ class Genome(object):
         connection = Connection(c_id, source_id, target_id)
         connection.initialize(config)
         self.connections[c_id] = connection
-
-    def crossover(self):
-        pass
 
     def mutate(self):
         pass

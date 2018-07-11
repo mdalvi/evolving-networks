@@ -12,24 +12,25 @@ class Species(object):
         self.representative = None
         self.fitness_history = []
 
+        self.members_fitness = []
         self.adjusted_fitness = 0.0
         self.adjusted_fitness_mean = 0.0
 
         self.target_size_float = 0.0
         self.target_size = 0
-        self.elite_size = 0
+        self.elites = 0
         self.off_springs = 0
         self.off_spring_asexual = 0
         self.off_spring_sexual = 0
-        self.selection_size = 0
+        self.survivors = 0
 
     def reset_stats(self):
         self.adjusted_fitness = 0.0
         self.adjusted_fitness_mean = 0.0
         self.target_size_float = 0.0
         self.target_size = 0
-        self.elite_size = 0
+        self.elites = 0
         self.off_springs = 0
         self.off_spring_asexual = 0
         self.off_spring_sexual = 0
-        self.selection_size = 0
+        self.survivors = 0

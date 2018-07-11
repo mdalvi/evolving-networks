@@ -1,5 +1,7 @@
+import numpy as np
+
 from evolving_networks.genome.genome import Genome
-from evolving_networks.math_util import normalize
+from evolving_networks.math_util import normalize, probabilistic_round
 from evolving_networks.reproduction.factory import Factory
 
 
@@ -11,16 +13,43 @@ class Traditional(Factory):
     def populate(self, population_size, generation, config):
         population = {}
         for _ in range(population_size):
-            genome_id = next(self._genome_indexer)
-            assert genome_id not in self.ancestors
-            g = Genome(genome_id, generation, config.genome)
+            member_id = next(self._genome_indexer)
+            assert member_id not in self.ancestors
+            g = Genome(member_id, generation, config.genome)
             g.initialize(config.node, config.connection)
-            population[genome_id] = g
-            self.ancestors.add(genome_id)
+            population[member_id] = g
+            self.ancestors.add(member_id)
         return population
 
-    def reproduce_off_springs(self, species):
-        pass
+    def reproduce_off_springs(self, species, generation, config):
+        off_springs = []
+        non_zero_species = 0
+        reproduce_probabilities = {}
+        for s_id, specie in species.items():
+            if specie.survivors != 0:
+                non_zero_species += 1
+
+            members_fitness_sum = np.sum(specie.members_fitness[:specie.survivors])
+            if members_fitness_sum == 0.0:
+                p = np.array([1.0] * specie.survivors) / specie.survivors
+                reproduce_probabilities[s_id] = p.tolist()
+            else:
+                p = np.array(specie.members_fitness[:specie.survivors]) / members_fitness_sum
+                reproduce_probabilities[s_id] = p.tolist()
+
+        for s_id, specie in species.items():
+            for _ in range(specie.off_spring_asexual):
+                member_parent_1 = np.random.choice(specie.members, 1, p=reproduce_probabilities[s_id])
+                member_id = next(self._genome_indexer)
+                assert member_id not in self.ancestors
+                g = Genome(member_id, generation, config.genome)
+                g.crossover_asexual(member_parent_1, config)
+                off_springs.append(g)
+
+            cross_species_matings = 0 if non_zero_species == 1 else probabilistic_round(
+                specie.off_spring_sexual * config.species.inter_species_mating_rate)
+
+            
 
     def reproduce(self, species, population_size, generation, config):
         species_data = []
@@ -76,7 +105,6 @@ class Traditional(Factory):
         for (specie_id, specie, _) in species_data:
             specie_fitness_mean = specie.fitness_mean
             specie.adjusted_fitness = normalize(min_fitness, max_fitness, specie_fitness_mean, 0.0, 1.0)
-
 
         min_species_size = max(config.species.min_species_size, config.reproduction.elitism)
         # spawn_amounts = self.compute_spawn(adjusted_fitness, nb_members, population_size, min_species_size)

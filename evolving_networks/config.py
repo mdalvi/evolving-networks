@@ -79,7 +79,7 @@ class DefaultSpeciesConfig(object):
     __params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
                 ConfigParameter('max_stagnation', int), ConfigParameter('elitism', float),
                 ConfigParameter('min_species_size', int), ConfigParameter('off_spring_asexual', float),
-                ConfigParameter('selection', float)]
+                ConfigParameter('survivor_rate', float)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
