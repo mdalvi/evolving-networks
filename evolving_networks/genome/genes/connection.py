@@ -15,7 +15,7 @@ from evolving_networks.math_util import clamp, normalize
 
 
 class Connection(Gene):
-    def __init__(self, c_id, source_id, target_id, weight=None, enabled=None):
+    def __init__(self, c_id, source_id, target_id, weight, enabled):
         super(Connection, self).__init__()
         self.id = c_id
         self.source_id = source_id

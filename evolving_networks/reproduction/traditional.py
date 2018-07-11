@@ -1,3 +1,12 @@
+"""
+# ==============
+# References
+# ==============
+
+[1] https://stackoverflow.com/questions/19286657/index-all-except-one-item-in-python
+
+"""
+
 import numpy as np
 
 from evolving_networks.genome.genome import Genome
@@ -24,32 +33,48 @@ class Traditional(Factory):
     def reproduce_off_springs(self, species, generation, config):
         off_springs = []
         non_zero_species = 0
-        reproduce_probabilities = {}
-        for s_id, specie in species.items():
+        reproduce_probs, species_probs = {}, []
+        for idx, (s_id, specie) in enumerate(species.items()):
             if specie.survivors != 0:
                 non_zero_species += 1
 
             members_fitness_sum = np.sum(specie.members_fitness[:specie.survivors])
             if members_fitness_sum == 0.0:
                 p = np.array([1.0] * specie.survivors) / specie.survivors
-                reproduce_probabilities[s_id] = p.tolist()
+                reproduce_probs[s_id] = p.tolist()
             else:
                 p = np.array(specie.members_fitness[:specie.survivors]) / members_fitness_sum
-                reproduce_probabilities[s_id] = p.tolist()
+                reproduce_probs[s_id] = p.tolist()
 
-        for s_id, specie in species.items():
+            species_probs[idx] = specie.survivors
+
+        species_probs_sum = np.sum(species_probs)
+        assert species_probs_sum != 0
+        species_probs = np.array(species_probs) / species_probs_sum
+
+        for s_idx, (s_id, specie) in enumerate(species.items()):
             for _ in range(specie.off_spring_asexual):
-                member_parent_1 = np.random.choice(specie.members, 1, p=reproduce_probabilities[s_id])
+                member_parent_1 = np.random.choice(specie.members, 1, p=reproduce_probs[s_id])
                 member_id = next(self._genome_indexer)
                 assert member_id not in self.ancestors
                 g = Genome(member_id, generation, config.genome)
-                g.crossover_asexual(member_parent_1, config)
+                g.crossover_asexual(member_parent_1)
                 off_springs.append(g)
 
-            cross_species_matings = 0 if non_zero_species == 1 else probabilistic_round(
+            inter_species_matings = 0 if non_zero_species == 1 else probabilistic_round(
                 specie.off_spring_sexual * config.species.inter_species_mating_rate)
+            intra_species__matings = specie.off_spring_sexual - inter_species_matings
 
-            
+            for _ in range(inter_species_matings):
+                member_parent_1 = np.random.choice(species[s_id].members, 1, p=reproduce_probs[s_id])
+                species_probs_revised = [0.0 if i == s_idx else p for i, p in enumerate(species_probs)]
+                s_id_2 = np.random.choice(list(species.keys()), 1, p=species_probs_revised)
+                member_parent_2 = np.random.choice(species[s_id_2].members, 1, p=reproduce_probs[s_id_2])
+                member_id = next(self._genome_indexer)
+                assert member_id not in self.ancestors
+                g = Genome(member_id, generation, config.genome)
+                g.crossover_sexual(member_parent_1, member_parent_2, config)
+                off_springs.append(g)
 
     def reproduce(self, species, population_size, generation, config):
         species_data = []

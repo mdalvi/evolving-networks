@@ -15,10 +15,10 @@ from evolving_networks.math_util import clamp, normalize
 
 
 class Node(Gene):
-    def __init__(self, node_id, node_type, bias=None, response=None, activation=None, aggregation=None):
+    def __init__(self, n_id, n_type, bias, response, activation, aggregation):
         super(Node, self).__init__()
-        self.id = node_id
-        self.type = node_type
+        self.id = n_id
+        self.type = n_type
         self.bias = bias
         self.response = response
         self.activation = activation
