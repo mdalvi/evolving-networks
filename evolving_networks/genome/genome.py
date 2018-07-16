@@ -49,9 +49,6 @@ class Genome(object):
             return self.birth_generation >= other.birth_generation
         return self.fitness >= other.fitness
 
-    def crossover_sexual(self, parent_1, parent_2, config):
-        pass
-
     def distance(self, other_genome, config):
         node_distance, connection_distance = 0.0, 0.0
         if self.nodes or other_genome.nodes:
@@ -89,6 +86,31 @@ class Genome(object):
         genomic_distance = (node_distance + connection_distance) / 2.0
         assert 0.0 <= genomic_distance <= 1.0
         return genomic_distance
+
+    def crossover_sexual(self, parent_1, parent_2, config):
+        if parent_1.adjusted_fitness > parent_2.adjusted_fitness:
+            p1, p2 = parent_1, parent_2
+        elif parent_2.adjusted_fitness > parent_1.adjusted_fitness:
+            p1, p2 = parent_2, parent_1
+        else:
+            if random.random() < 0.5:
+                p1, p2 = parent_1, parent_2
+            else:
+                p1, p2 = parent_2, parent_1
+
+        for node in p1.nodes.values():
+            if node.type == 'input' or node.type == 'output':
+                assert node.id not in self.nodes
+                self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
+                self.all_node_ids.add(node.id)
+                if node.type == 'input':
+                    self.input_node_ids.add(node.id)
+                elif node.type == 'output':
+                    self.output_node_ids.add(node.id)
+                else:
+                    raise InvalidConfigurationError('Unexpected configuration value [{}]'.format(node.type))
+
+
 
     def crossover_asexual(self, parent_1):
         for node in parent_1.nodes.values():
@@ -177,6 +199,7 @@ class Genome(object):
                 'Unexpected configuration value [{}]'.format(self.config.initial_connection))
 
     def _compute_full_connectors(self, direct):
+        # TODO: Ensure function does not create cyclic connections unknowingly
         connectors = []
         if self.hidden_node_ids:
             for source_id in self.input_node_ids:

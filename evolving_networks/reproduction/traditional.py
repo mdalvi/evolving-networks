@@ -67,7 +67,8 @@ class Traditional(Factory):
 
             for _ in range(inter_species_matings):
                 member_parent_1 = np.random.choice(species[s_id].members, 1, p=reproduce_probs[s_id])
-                species_probs_revised = [0.0 if i == s_idx else p for i, p in enumerate(species_probs)]
+                species_probs_revised = np.array([0.0 if i == s_idx else p for i, p in enumerate(species_probs)])
+                species_probs_revised = species_probs_revised / np.sum(species_probs_revised)
                 s_id_2 = np.random.choice(list(species.keys()), 1, p=species_probs_revised)
                 member_parent_2 = np.random.choice(species[s_id_2].members, 1, p=reproduce_probs[s_id_2])
                 member_id = next(self._genome_indexer)
