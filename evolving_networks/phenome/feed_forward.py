@@ -17,8 +17,8 @@ class FeedForwardNetwork(Phenome):
         activation_node_set = set()
         enabled_connections = [(conn.id, conn.source_id, conn.target_id) for conn in self.genome.connections.values() if
                                conn.enabled]
-        essential_nodes = build_essential_nodes(self.genome.all_node_ids, enabled_connections)
-        for o_key in self.genome.output_node_ids:
+        essential_nodes = build_essential_nodes(self.genome.node_ids['all'], enabled_connections)
+        for o_key in self.genome.node_ids['output']:
             activation_path = []
             activation_recursion(essential_nodes, o_key, activation_path)
             activation_node_set.update(activation_path)
@@ -36,9 +36,9 @@ class FeedForwardNetwork(Phenome):
                 self.e_nodes[node_id] = node.type
 
     def activate(self, inputs):
-        if len(self.genome.input_node_ids) != len(inputs):
+        if len(self.genome.node_ids['input']) != len(inputs):
             raise RuntimeError(
-                "UNEXPECTED NUMBER OF INPUTS [{}] vs [{}]".format(len(inputs), len(self.genome.input_node_ids)))
+                "UNEXPECTED NUMBER OF INPUTS [{}] vs [{}]".format(len(inputs), len(self.genome.node_ids['input'])))
 
         # Assign incoming to input nodes
         for node, ip in zip(self.nodes['input'].values(), inputs):

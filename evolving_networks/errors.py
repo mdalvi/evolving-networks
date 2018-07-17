@@ -18,5 +18,9 @@ class InvalidConfigurationFile(IOError):
     pass
 
 
+class InvalidConditionalError(AssertionError):
+    pass
+
+
 class InvalidAttributeValueError(AttributeError):
     pass

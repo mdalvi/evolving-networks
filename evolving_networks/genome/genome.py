@@ -1,7 +1,7 @@
 import random
 from itertools import count
 
-from evolving_networks.errors import InvalidConfigurationError
+from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.genome.genes.connection import Connection
 from evolving_networks.genome.genes.node import Node
 from evolving_networks.math_util import normalize
@@ -24,10 +24,7 @@ class Genome(object):
         self.fitness = 0.0
         self.adjusted_fitness = 0.0
 
-        self.all_node_ids = set()
-        self.input_node_ids = set()
-        self.hidden_node_ids = set()
-        self.output_node_ids = set()
+        self.node_ids = {'all': set(), 'input': set(), 'hidden': set(), 'output': set()}
 
     def __lt__(self, other):
         if self.fitness == other.fitness:
@@ -88,43 +85,118 @@ class Genome(object):
         return genomic_distance
 
     def crossover_sexual(self, parent_1, parent_2, config):
+        fitness_case = 'unequal'
         if parent_1.adjusted_fitness > parent_2.adjusted_fitness:
             p1, p2 = parent_1, parent_2
         elif parent_2.adjusted_fitness > parent_1.adjusted_fitness:
             p1, p2 = parent_2, parent_1
         else:
+            fitness_case = 'equal'
             if random.random() < 0.5:
                 p1, p2 = parent_1, parent_2
             else:
                 p1, p2 = parent_2, parent_1
 
-        for node in p1.nodes.values():
-            if node.type == 'input' or node.type == 'output':
-                assert node.id not in self.nodes
-                self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
-                self.all_node_ids.add(node.id)
-                if node.type == 'input':
-                    self.input_node_ids.add(node.id)
-                elif node.type == 'output':
-                    self.output_node_ids.add(node.id)
+        connection_set_1 = p1.connections
+        connection_set_2 = p2.connections
+
+        c_list_1 = sorted(list(connection_set_1.keys()))
+        c_list_2 = sorted(list(connection_set_2.keys()))
+
+        if len(c_list_1) < len(c_list_2):
+            c_list_1.extend([-1] * (max(len(c_list_1), len(c_list_2)) - min(len(c_list_1), len(c_list_2))))
+        else:
+            c_list_2.extend([-1] * (max(len(c_list_1), len(c_list_2)) - min(len(c_list_1), len(c_list_2))))
+
+        connection_pairs = []
+        for x, y in zip(c_list_1, c_list_2):
+            if x == y or x == -1 or y == -1:
+                connection_pairs.append((x, y))
+            else:
+                connection_pairs.append((x, -1))
+                connection_pairs.append((-1, y))
+
+        required_nodes = set()
+        for c1_idx, c2_idx in connection_pairs:
+            if c1_idx == c2_idx:
+                c1 = connection_set_1[c1_idx]
+                c2 = connection_set_2[c2_idx]
+                new_c = c1.crossover(c2)
+                self.connections[new_c.id] = new_c
+                required_nodes.add(new_c.source_id)
+                required_nodes.add(new_c.target_id)
+            else:
+                if fitness_case == 'equal':
+                    if random.random < 0.5:
+                        if c1_idx != -1:
+                            c = connection_set_1[c1_idx]
+                            self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
+                            required_nodes.add(c.source_id)
+                            required_nodes.add(c.target_id)
+                    else:
+                        if c2_idx != -1:
+                            c = connection_set_2[c2_idx]
+                            self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
+                            required_nodes.add(c.source_id)
+                            required_nodes.add(c.target_id)
                 else:
-                    raise InvalidConfigurationError('Unexpected configuration value [{}]'.format(node.type))
+                    if c1_idx != -1:
+                        c = connection_set_1[c1_idx]
+                        self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
+                        required_nodes.add(c.source_id)
+                        required_nodes.add(c.target_id)
 
+        node_set_1 = p1.nodes
+        node_set_2 = p2.nodes
 
+        n_list_1 = sorted(list(node_set_1.keys()))
+        n_list_2 = sorted(list(node_set_2.keys()))
+
+        if len(n_list_1) < len(n_list_1):
+            n_list_1.extend([-1] * (max(len(n_list_1), len(n_list_2)) - min(len(n_list_1), len(n_list_2))))
+        else:
+            n_list_2.extend([-1] * (max(len(n_list_1), len(n_list_2)) - min(len(n_list_1), len(n_list_2))))
+
+        node_pairs = []
+        for x, y in zip(n_list_1, n_list_2):
+            if x == y or x == -1 or y == -1:
+                node_pairs.append((x, y))
+            else:
+                node_pairs.append((x, -1))
+                node_pairs.append((-1, y))
+
+        for n1_idx, n2_idx in node_pairs:
+            if n1_idx == n2_idx:
+                n_type = node_set_1[n1_idx].type
+                if n1_idx in required_nodes or n_type == 'input' or n_type == 'output':
+                    new_n = node_set_1[n1_idx].crossover(node_set_2[n2_idx])
+                    assert new_n.id not in self.nodes
+                    self.nodes[new_n.id] = new_n
+                    self.node_ids['all'].add(new_n.id)
+                    self.node_ids[new_n.type].add(new_n.id)
+            elif n1_idx != n2_idx and n1_idx == -1:
+                n = node_set_2[n2_idx]
+                if n2_idx in required_nodes or n.type == 'input' or n.type == 'output':
+                    assert n.id not in self.nodes
+                    self._create_node(n.id, n.type, n.bias, n.response, n.activation, n.aggregation)
+                    self.node_ids['all'].add(n.id)
+                    self.node_ids[n.type].add(n.id)
+            elif n1_idx != n2_idx and n2_idx == -1:
+                n = node_set_1[n1_idx].type
+                if n1_idx in required_nodes or n.type == 'input' or n.type == 'output':
+                    assert n.id not in self.nodes
+                    self._create_node(n.id, n.type, n.bias, n.response, n.activation, n.aggregation)
+                    self.node_ids['all'].add(n.id)
+                    self.node_ids[n.type].add(n.id)
+            else:
+                raise InvalidConditionalError()
 
     def crossover_asexual(self, parent_1):
         for node in parent_1.nodes.values():
             assert node.id not in self.nodes
             self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
-            self.all_node_ids.add(node.id)
-            if node.type == 'input':
-                self.input_node_ids.add(node.id)
-            elif node.type == 'hidden':
-                self.hidden_node_ids.add(node.id)
-            elif node.type == 'output':
-                self.output_node_ids.add(node.id)
-            else:
-                raise InvalidConfigurationError('Unexpected configuration value [{}]'.format(node.type))
+            self.node_ids['all'].add(node.id)
+            self.node_ids[node.type].add(node.id)
 
         for connection in parent_1.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
@@ -144,29 +216,29 @@ class Genome(object):
         for _ in range(self.config.num_inputs):
             n_id = self._next_node_id()
             self._create_node(n_id, 'input', config=node_config)
-            self.input_node_ids.add(n_id)
-            self.all_node_ids.add(n_id)
+            self.node_ids['input'].add(n_id)
+            self.node_ids['all'].add(n_id)
 
         for _ in range(self.config.num_hidden):
             n_id = self._next_node_id()
             self._create_node(n_id, 'hidden', config=node_config)
-            self.hidden_node_ids.add(n_id)
-            self.all_node_ids.add(n_id)
+            self.node_ids['hidden'].add(n_id)
+            self.node_ids['all'].add(n_id)
 
         for _ in range(self.config.num_outputs):
             n_id = self._next_node_id()
             self._create_node(n_id, 'output', config=node_config)
-            self.output_node_ids.add(n_id)
-            self.all_node_ids.add(n_id)
+            self.node_ids['output'].add(n_id)
+            self.node_ids['all'].add(n_id)
 
         if self.config.initial_connection == 'fs_neat_no_hidden':
-            source_id = random.choice(self.input_node_ids)
-            for target_id in self.output_node_ids:
+            source_id = random.choice(self.node_ids['input'])
+            for target_id in self.node_ids['output']:
                 self._create_connection(source_id, target_id, config=connection_config)
 
         elif self.config.initial_connection == 'fs_neat_hidden':
-            source_id = random.choice(self.input_node_ids)
-            for target_id in set().union(self.hidden_node_ids, self.output_node_ids):
+            source_id = random.choice(self.node_ids['input'])
+            for target_id in set().union(self.node_ids['hidden'], self.node_ids['output']):
                 self._create_connection(source_id, target_id, config=connection_config)
 
         elif self.config.initial_connection == 'full_no_direct':
@@ -201,22 +273,22 @@ class Genome(object):
     def _compute_full_connectors(self, direct):
         # TODO: Ensure function does not create cyclic connections unknowingly
         connectors = []
-        if self.hidden_node_ids:
-            for source_id in self.input_node_ids:
-                for target_id in self.hidden_node_ids:
+        if self.node_ids['hidden']:
+            for source_id in self.node_ids['input']:
+                for target_id in self.node_ids['hidden']:
                     connectors.append((source_id, target_id))
-            for source_id in self.hidden_node_ids:
-                for target_id in self.output_node_ids:
+            for source_id in self.node_ids['hidden']:
+                for target_id in self.node_ids['output']:
                     connectors.append((source_id, target_id))
-        if direct or (not self.hidden_node_ids):
-            for source_id in self.input_node_ids:
-                for target_id in self.output_node_ids:
+        if direct or (not self.node_ids['hidden']):
+            for source_id in self.node_ids['input']:
+                for target_id in self.node_ids['output']:
                     connectors.append((source_id, target_id))
 
         # TODO: Recurrent networks
         # For recurrent genomes, include node self-connections.
         # if not self.config.feed_forward:
-        #     for recurrent_id in set().union(self.hidden_node_ids, self.output_node_ids):
+        #     for recurrent_id in set().union(self.node_ids['hidden'], self.node_ids['output']):
         #         connectors.append((recurrent_id, recurrent_id))
 
         return connectors
