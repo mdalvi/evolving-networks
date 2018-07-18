@@ -29,9 +29,8 @@ def evaluate(genomes, config):
             output = ff_network.activate(x)
             genome.fitness -= (output[0] - y[0]) ** 2
 
-    for genome_id, genome in genomes:
-        print(genome.fitness)
-
+    fit_list = [genome.fitness for _, genome in genomes]
+    print(fit_list)
 
 
 if __name__ == "__main__":

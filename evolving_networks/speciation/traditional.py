@@ -26,7 +26,7 @@ class Traditional(Factory):
     def sort_specie_genomes(self):
         min_specie_size, max_specie_size = float('+Infinity'), float('-Infinity')
         for specie in self.species.values():
-            sorted(specie.members, reverse=True)
+            specie.members = sorted(specie.members, reverse=True)
             min_specie_size = min(min_specie_size, len(specie.members))
             max_specie_size = max(max_specie_size, len(specie.members))
 

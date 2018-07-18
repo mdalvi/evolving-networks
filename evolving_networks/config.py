@@ -33,7 +33,7 @@ class Config(object):
             raise InvalidConfigurationFile("NO SUCH CONFIGURATION FILE FOUND [{}]".format(os.path.abspath(filename)))
 
         config_parser = configparser.ConfigParser()
-        with open(filename) as f:
+        with open(filename, encoding="utf8") as f:
             config_parser.read_file(f)
 
         if not config_parser.has_section('NEAT'):

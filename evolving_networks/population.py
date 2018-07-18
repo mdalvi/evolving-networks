@@ -55,3 +55,5 @@ class Population(object):
             self.speciation.calc_specie_stats(config)
             self.population = self.reproduction.reproduce(self.speciation.species, config.neat.population_size,
                                                           self.generation, config)
+            self.speciation.speciate(self.population, self.generation, config)
+            self.generation += 1
