@@ -4,6 +4,7 @@ from itertools import count
 from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.genome.genes.connection import Connection
 from evolving_networks.genome.genes.node import Node
+from evolving_networks.genome.helpers import is_cyclic
 from evolving_networks.math_util import normalize
 
 
@@ -108,43 +109,53 @@ class Genome(object):
         else:
             c_list_2.extend([-1] * (max(len(c_list_1), len(c_list_2)) - min(len(c_list_1), len(c_list_2))))
 
-        connection_pairs = []
+        matched_connections, unmatched_connections = [], []
         for x, y in zip(c_list_1, c_list_2):
             if x == y or x == -1 or y == -1:
-                connection_pairs.append((x, y))
+                matched_connections.append((x, y))
             else:
-                connection_pairs.append((x, -1))
-                connection_pairs.append((-1, y))
+                unmatched_connections.append((x, -1))
+                unmatched_connections.append((-1, y))
 
         required_nodes = set()
-        for c1_idx, c2_idx in connection_pairs:
-            if c1_idx == c2_idx:
-                c1 = connection_set_1[c1_idx]
-                c2 = connection_set_2[c2_idx]
-                new_c = c1.crossover(c2)
-                self.connections[new_c.id] = new_c
-                required_nodes.add(new_c.source_id)
-                required_nodes.add(new_c.target_id)
-            else:
-                if fitness_case == 'equal':
-                    if random.random < 0.5:
-                        if c1_idx != -1:
-                            c = connection_set_1[c1_idx]
-                            self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
-                            required_nodes.add(c.source_id)
-                            required_nodes.add(c.target_id)
-                    else:
-                        if c2_idx != -1:
-                            c = connection_set_2[c2_idx]
-                            self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
-                            required_nodes.add(c.source_id)
-                            required_nodes.add(c.target_id)
-                else:
+        for c1_idx, c2_idx in matched_connections:
+            c1 = connection_set_1[c1_idx]
+            c2 = connection_set_2[c2_idx]
+            new_c = c1.crossover(c2)
+            assert new_c.id not in self.connections
+            self.connections[new_c.id] = new_c
+            required_nodes.add(new_c.source_id)
+            required_nodes.add(new_c.target_id)
+
+        for c1_idx, c2_idx in unmatched_connections:
+            if fitness_case == 'equal':
+                if random.random < 0.5:
                     if c1_idx != -1:
                         c = connection_set_1[c1_idx]
+                        if config.genome.feed_forward:
+                            if is_cyclic(self.connections, c.source_id, c.target_id) is True:
+                                continue
                         self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
                         required_nodes.add(c.source_id)
                         required_nodes.add(c.target_id)
+                else:
+                    if c2_idx != -1:
+                        c = connection_set_2[c2_idx]
+                        if config.genome.feed_forward:
+                            if is_cyclic(self.connections, c.source_id, c.target_id) is True:
+                                continue
+                        self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
+                        required_nodes.add(c.source_id)
+                        required_nodes.add(c.target_id)
+            else:
+                if c1_idx != -1:
+                    c = connection_set_1[c1_idx]
+                    if config.genome.feed_forward:
+                        if is_cyclic(self.connections, c.source_id, c.target_id) is True:
+                            continue
+                    self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
+                    required_nodes.add(c.source_id)
+                    required_nodes.add(c.target_id)
 
         node_set_1 = p1.nodes
         node_set_2 = p2.nodes
@@ -167,29 +178,34 @@ class Genome(object):
 
         for n1_idx, n2_idx in node_pairs:
             if n1_idx == n2_idx:
-                n_type = node_set_1[n1_idx].type
-                if n1_idx in required_nodes or n_type == 'input' or n_type == 'output':
-                    new_n = node_set_1[n1_idx].crossover(node_set_2[n2_idx])
+                n1 = node_set_1[n1_idx]
+                n2 = node_set_2[n2_idx]
+                assert n1.type == n2.type
+                if n1_idx in required_nodes or n1.type == 'input' or n1.type == 'output':
+                    new_n = n1.crossover(n2)
                     assert new_n.id not in self.nodes
                     self.nodes[new_n.id] = new_n
                     self.node_ids['all'].add(new_n.id)
                     self.node_ids[new_n.type].add(new_n.id)
-            elif n1_idx != n2_idx and n1_idx == -1:
+            elif n1_idx != n2_idx and n1_idx != -1 and n2_idx == -1:
+                n = node_set_1[n1_idx]
+                if n1_idx in required_nodes or n.type == 'input' or n.type == 'output':
+                    assert n.id not in self.nodes
+                    self._create_node(n.id, n.type, n.bias, n.response, n.activation, n.aggregation)
+                    self.node_ids['all'].add(n.id)
+                    self.node_ids[n.type].add(n.id)
+            elif n1_idx != n2_idx and n2_idx != -1 and n1_idx == -1:
                 n = node_set_2[n2_idx]
                 if n2_idx in required_nodes or n.type == 'input' or n.type == 'output':
                     assert n.id not in self.nodes
                     self._create_node(n.id, n.type, n.bias, n.response, n.activation, n.aggregation)
                     self.node_ids['all'].add(n.id)
                     self.node_ids[n.type].add(n.id)
-            elif n1_idx != n2_idx and n2_idx == -1:
-                n = node_set_1[n1_idx].type
-                if n1_idx in required_nodes or n.type == 'input' or n.type == 'output':
-                    assert n.id not in self.nodes
-                    self._create_node(n.id, n.type, n.bias, n.response, n.activation, n.aggregation)
-                    self.node_ids['all'].add(n.id)
-                    self.node_ids[n.type].add(n.id)
             else:
                 raise InvalidConditionalError()
+
+        self.node_indexer = count(max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr) + 1)
+        self.node_indexer_cntr = max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr)
 
     def crossover_asexual(self, parent_1):
         for node in parent_1.nodes.values():
@@ -201,8 +217,6 @@ class Genome(object):
         for connection in parent_1.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
 
-        self.fitness = parent_1.fitness
-        self.adjusted_fitness = parent_1.adjusted_fitness
         self.node_indexer = count(parent_1.node_indexer_cntr + 1)
         self.node_indexer_cntr = parent_1.node_indexer_cntr
 

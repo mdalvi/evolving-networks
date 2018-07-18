@@ -89,7 +89,7 @@ class DefaultSpeciesConfig(object):
 class DefaultGenomeConfig(object):
     __params = [ConfigParameter('num_inputs', int), ConfigParameter('num_hidden', int),
                 ConfigParameter('num_outputs', int), ConfigParameter('initial_connection', str),
-                ConfigParameter('partial_connection_rate', float)]
+                ConfigParameter('partial_connection_rate', float), ConfigParameter('feed_forward', bool)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
