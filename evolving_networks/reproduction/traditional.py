@@ -46,15 +46,16 @@ class Traditional(Factory):
                 p = np.array(specie.members_fitness[:specie.survivors]) / members_fitness_sum
                 reproduce_probs[s_id] = p.tolist()
 
-            species_probs[idx] = specie.survivors
+            species_probs.append(specie.survivors)
 
+        assert non_zero_species != 0
         species_probs_sum = np.sum(species_probs)
         assert species_probs_sum != 0
         species_probs = np.array(species_probs) / species_probs_sum
 
         for s_idx, (s_id, specie) in enumerate(species.items()):
             for _ in range(specie.off_spring_asexual):
-                member_parent_1 = np.random.choice(specie.members, 1, p=reproduce_probs[s_id])
+                member_parent_1 = np.random.choice(specie.members[:specie.survivors], 1, p=reproduce_probs[s_id])
                 member_id = next(self._genome_indexer)
                 assert member_id not in self.ancestors
                 g = Genome(member_id, generation, config.genome)
@@ -63,19 +64,57 @@ class Traditional(Factory):
 
             inter_species_matings = 0 if non_zero_species == 1 else probabilistic_round(
                 specie.off_spring_sexual * config.species.inter_species_mating_rate)
-            intra_species__matings = specie.off_spring_sexual - inter_species_matings
+            intra_species_matings = specie.off_spring_sexual - inter_species_matings
 
             for _ in range(inter_species_matings):
-                member_parent_1 = np.random.choice(species[s_id].members, 1, p=reproduce_probs[s_id])
+                s_id_1 = s_id
+                member_parent_1 = np.random.choice(species[s_id_1].members[:species[s_id_1].survivors], 1,
+                                                   p=reproduce_probs[s_id_1])
+
                 species_probs_revised = np.array([0.0 if i == s_idx else p for i, p in enumerate(species_probs)])
                 species_probs_revised = species_probs_revised / np.sum(species_probs_revised)
                 s_id_2 = np.random.choice(list(species.keys()), 1, p=species_probs_revised)
-                member_parent_2 = np.random.choice(species[s_id_2].members, 1, p=reproduce_probs[s_id_2])
+
+                member_parent_2 = np.random.choice(species[s_id_2].members[:species[s_id_2].survivors], 1,
+                                                   p=reproduce_probs[s_id_2])
+
                 member_id = next(self._genome_indexer)
                 assert member_id not in self.ancestors
                 g = Genome(member_id, generation, config.genome)
                 g.crossover_sexual(member_parent_1, member_parent_2, config)
                 off_springs.append(g)
+
+            for _ in range(intra_species_matings):
+                if specie.survivors == 1:
+                    member_parent_1 = np.random.choice(specie.members[:specie.survivors], 1, p=reproduce_probs[s_id])
+                    member_id = next(self._genome_indexer)
+                    assert member_id not in self.ancestors
+                    g = Genome(member_id, generation, config.genome)
+                    g.crossover_asexual(member_parent_1)
+                    off_springs.append(g)
+                else:
+                    m1_idx = np.random.choice(range(specie.survivors), 1, p=reproduce_probs[s_id])
+                    member_parent_1 = specie.members[m1_idx]
+                    reproduce_probs_revised = np.array(
+                        [0.0 if i == m1_idx else p for i, p in enumerate(reproduce_probs[s_id])])
+                    reproduce_probs_revised_sum = np.sum(reproduce_probs_revised)
+                    if reproduce_probs_revised_sum == 0.0:
+                        member_id = next(self._genome_indexer)
+                        assert member_id not in self.ancestors
+                        g = Genome(member_id, generation, config.genome)
+                        g.crossover_asexual(member_parent_1)
+                        off_springs.append(g)
+                    else:
+                        reproduce_probs_revised = reproduce_probs_revised / reproduce_probs_revised_sum
+                        m2_idx = np.random.choice(range(specie.survivors), 1, p=reproduce_probs_revised)
+                        member_parent_2 = specie.members[m2_idx]
+                        member_id = next(self._genome_indexer)
+                        assert member_id not in self.ancestors
+                        g = Genome(member_id, generation, config.genome)
+                        g.crossover_sexual(member_parent_1, member_parent_2, config)
+                        off_springs.append(g)
+
+        return off_springs
 
     def reproduce(self, species, population_size, generation, config):
         species_data = []
