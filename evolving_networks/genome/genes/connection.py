@@ -8,6 +8,8 @@
 """
 import random
 
+import numpy as np
+
 from evolving_networks.errors import InvalidConfigurationError
 from evolving_networks.genome.genes.gene import Gene
 from evolving_networks.initializers import random_normal, random_uniform
@@ -69,19 +71,33 @@ class Connection(Gene):
         wmax = config.weight_max_value
 
         if config.single_structural_mutation:
-            mutate_rate = wmr + wrr + emr
-            r = random.random()
-            if r < wmr / mutate_rate:
-                self.weight = clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
-            elif r < (wmr + wrr) / mutate_rate:
-                if wit == 'normal':
-                    self.weight = clamp(random_normal(wim, wis), wmin, wmax)
-                elif wit == 'uniform':
-                    self.weight = random_uniform(wim, wis, wmin, wmax)
+            mutation_success = False
+            mutation_probs = np.array([wmr + wrr + emr])
+            while True:
+                mutation_probs = mutation_probs / np.sum(mutation_probs)
+                mut_idx = np.random.choice(range(3), 1, p=mutation_probs)[0]
+
+                if mut_idx == 0:
+                    self.weight = clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
+                    mutation_success = True
+                elif mut_idx == 1:
+                    if wit == 'normal':
+                        self.weight = clamp(random_normal(wim, wis), wmin, wmax)
+                    elif wit == 'uniform':
+                        self.weight = random_uniform(wim, wis, wmin, wmax)
+                    else:
+                        raise InvalidConfigurationError()
+                    mutation_success = True
                 else:
-                    raise InvalidConfigurationError()
-            else:
-                self.enabled = True if self.enabled is False else False
+                    self.enabled = True if self.enabled is False else False
+                    mutation_success = True
+
+                if mutation_success is True:
+                    break
+
+                mutation_probs[mut_idx] = 0.0
+                if np.sum(mutation_probs) == 0.0:
+                    break
         else:
             if random.random() < wmr:
                 self.weight = clamp(self.weight + random_normal(0.0, wms), wmin, wmax)

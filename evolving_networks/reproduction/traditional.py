@@ -38,7 +38,7 @@ class Traditional(Factory):
             if specie.survivors != 0:
                 non_zero_species += 1
 
-            members_fitness_sum = np.sum(specie.members_fitness[:specie.survivors])
+            members_fitness_sum = sum(specie.members_fitness[:specie.survivors])
             if members_fitness_sum == 0.0:
                 p = np.array([1.0] * specie.survivors) / specie.survivors
                 reproduce_probs[s_id] = p.tolist()
@@ -49,7 +49,7 @@ class Traditional(Factory):
             species_probs.append(specie.survivors)
 
         assert non_zero_species != 0
-        species_probs_sum = np.sum(species_probs)
+        species_probs_sum = sum(species_probs)
         assert species_probs_sum != 0
         species_probs = np.array(species_probs) / species_probs_sum
 

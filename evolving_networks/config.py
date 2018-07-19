@@ -89,7 +89,9 @@ class DefaultSpeciesConfig(object):
 class DefaultGenomeConfig(object):
     __params = [ConfigParameter('num_inputs', int), ConfigParameter('num_hidden', int),
                 ConfigParameter('num_outputs', int), ConfigParameter('initial_connection', str),
-                ConfigParameter('partial_connection_rate', float), ConfigParameter('feed_forward', bool)]
+                ConfigParameter('partial_connection_rate', float), ConfigParameter('feed_forward', bool),
+                ConfigParameter('node_add_rate', float), ConfigParameter('node_delete_rate', float),
+                ConfigParameter('conn_add_rate', float), ConfigParameter('conn_delete_rate', float)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:

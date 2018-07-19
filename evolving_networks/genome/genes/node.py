@@ -8,6 +8,8 @@
 """
 import random
 
+import numpy as np
+
 from evolving_networks.errors import InvalidConfigurationError
 from evolving_networks.genome.genes.gene import Gene
 from evolving_networks.initializers import random_normal, random_uniform
@@ -104,44 +106,57 @@ class Node(Gene):
         agg_opt = getattr(config, 'aggregation_options')
 
         if config.single_structural_mutation:
-            mutate_rate = bmr + brr + rmr + rrr + act_mr + agg_mr
-            r = random.random()
-            if r < bmr / mutate_rate:
-                self.bias = clamp(self.bias + random_normal(0.0, bms), bmin, bmax)
-            elif r < (bmr + brr) / mutate_rate:
-                if bit == 'normal':
-                    self.bias = clamp(random_normal(bim, bis), bmin, bmax)
-                elif bit == 'uniform':
-                    self.bias = random_uniform(bim, bis, bmin, bmax)
+            mutation_success = False
+            mutation_probs = np.array([bmr, brr, rmr, rrr, act_mr, agg_mr])
+            while True:
+                mutation_probs = mutation_probs / np.sum(mutation_probs)
+                mut_idx = np.random.choice(range(6), 1, p=mutation_probs)[0]
+
+                if mut_idx == 0:
+                    self.bias = clamp(self.bias + random_normal(0.0, bms), bmin, bmax)
+                    mutation_success = True
+                elif mut_idx == 1:
+                    if bit == 'normal':
+                        self.bias = clamp(random_normal(bim, bis), bmin, bmax)
+                    elif bit == 'uniform':
+                        self.bias = random_uniform(bim, bis, bmin, bmax)
+                    else:
+                        raise InvalidConfigurationError()
+                    mutation_success = True
+                elif mut_idx == 2:
+                    self.response = clamp(self.response + random_normal(0.0, rms), rmin, rmax)
+                    mutation_success = True
+                elif mut_idx == 3:
+                    if rit == 'normal':
+                        self.response = clamp(random_normal(rim, ris), rmin, rmax)
+                    elif rit == 'uniform':
+                        self.response = random_uniform(rim, ris, rmin, rmax)
+                    else:
+                        raise InvalidConfigurationError()
+                    mutation_success = True
+                elif mut_idx == 4:
+                    nb_activations = len(act_opt)
+                    if nb_activations > 1:
+                        choices = list(range(nb_activations))
+                        choices.remove(act_opt.index(self.activation))
+                        choice_idx = random.choice(choices)
+                        self.activation = act_opt[choice_idx]
+                        mutation_success = True
                 else:
-                    raise InvalidConfigurationError()
-            elif r < (bmr + brr + rmr) / mutate_rate:
-                self.response = clamp(self.response + random_normal(0.0, rms), rmin, rmax)
-            elif r < (bmr + brr + rmr + rrr) / mutate_rate:
-                if rit == 'normal':
-                    self.response = clamp(random_normal(rim, ris), rmin, rmax)
-                elif rit == 'uniform':
-                    self.response = random_uniform(rim, ris, rmin, rmax)
-                else:
-                    raise InvalidConfigurationError()
-            elif r < (bmr + brr + rmr + rrr + act_mr) / mutate_rate:
-                # its better to keep act_mr = 0.0 if act_opt has only one choice
-                # you waste a probable chance if act_length > 1 is False and act_mr != 0.0
-                act_length = len(act_opt)
-                if act_length > 1:
-                    choices = list(range(act_length))
-                    choices.remove(act_opt.index(self.activation))
-                    choice_idx = random.choice(choices)
-                    self.activation = act_opt[choice_idx]
-            else:
-                # its better to keep agg_mr = 0.0 if agg_opt has only one choice
-                # you waste a probable chance if agg_length > 1 is False and agg_mr != 0.0
-                agg_length = len(agg_opt)
-                if agg_length > 1:
-                    choices = list(range(agg_length))
-                    choices.remove(agg_opt.index(self.aggregation))
-                    choice_idx = random.choice(choices)
-                    self.aggregation = agg_opt[choice_idx]
+                    nb_aggregations = len(agg_opt)
+                    if nb_aggregations > 1:
+                        choices = list(range(nb_aggregations))
+                        choices.remove(agg_opt.index(self.aggregation))
+                        choice_idx = random.choice(choices)
+                        self.aggregation = agg_opt[choice_idx]
+                        mutation_success = True
+
+                if mutation_success is True:
+                    break
+
+                mutation_probs[mut_idx] = 0.0
+                if np.sum(mutation_probs) == 0.0:
+                    break
         else:
             if random.random() < bmr:
                 self.bias = clamp(self.bias + random_normal(0.0, bms), bmin, bmax)
@@ -166,21 +181,17 @@ class Node(Gene):
                     raise InvalidConfigurationError()
 
             if random.random() < act_mr:
-                # its better to keep act_mr = 0.0 if act_opt has only one choice
-                # you waste a probable chance if act_length > 1 is False and act_mr != 0.0
-                act_length = len(act_opt)
-                if act_length > 1:
-                    choices = list(range(act_length))
+                nb_activations = len(act_opt)
+                if nb_activations > 1:
+                    choices = list(range(nb_activations))
                     choices.remove(act_opt.index(self.activation))
                     choice_idx = random.choice(choices)
                     self.activation = act_opt[choice_idx]
 
             if random.random() < agg_mr:
-                # its better to keep agg_mr = 0.0 if agg_opt has only one choice
-                # you waste a probable chance if agg_length > 1 is False and agg_mr != 0.0
-                agg_length = len(agg_opt)
-                if agg_length > 1:
-                    choices = list(range(agg_length))
+                nb_aggregations = len(agg_opt)
+                if nb_aggregations > 1:
+                    choices = list(range(nb_aggregations))
                     choices.remove(agg_opt.index(self.aggregation))
                     choice_idx = random.choice(choices)
                     self.aggregation = agg_opt[choice_idx]

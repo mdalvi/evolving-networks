@@ -1,6 +1,8 @@
 import random
 from itertools import count
 
+import numpy as np
+
 from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.genome.genes.connection import Connection
 from evolving_networks.genome.genes.node import Node
@@ -84,6 +86,15 @@ class Genome(object):
         genomic_distance = (node_distance + connection_distance) / 2.0
         assert 0.0 <= genomic_distance <= 1.0
         return genomic_distance
+
+    def mutate(self, config):
+
+        node_add_rate = config.genome.node_add_rate
+        node_delete_rate = 0.0 if len(self.node_ids['hidden']) < 2 else config.genome.node_delete_rate
+        conn_add_rate = config.genome.conn_add_rate
+        conn_delete_rate = 0.0 if len(self.connections) < 2 else config.genome.conn_delete_rate
+
+        mutation_probs = np.array([node_add_rate, node_delete_rate, conn_add_rate, conn_delete_rate])
 
     def crossover_sexual(self, parent_1, parent_2, config):
         fitness_case = 'unequal'
@@ -325,6 +336,3 @@ class Genome(object):
         if config is not None:
             connection.initialize(config)
         self.connections[c_id] = connection
-
-    def mutate(self):
-        pass
