@@ -82,28 +82,28 @@ class Node(Gene):
         return node
 
     def mutate(self, config):
-        bmr = getattr(config, 'bias_mutate_rate')
-        bms = getattr(config, 'bias_mutate_stdev')
-        brr = getattr(config, 'bias_replace_rate')
-        bim = getattr(config, 'bias_init_mean')
-        bis = getattr(config, 'bias_init_stdev')
-        bit = getattr(config, 'bias_init_type')
-        bmin = getattr(config, 'bias_min_value')
-        bmax = getattr(config, 'bias_max_value')
+        bmr = config.bias_mutate_rate
+        bms = config.bias_mutate_stdev
+        brr = config.bias_replace_rate
+        bim = config.bias_init_mean
+        bis = config.bias_init_stdev
+        bit = config.bias_init_type
+        bmin = config.bias_min_value
+        bmax = config.bias_max_value
 
-        rmr = getattr(config, 'response_mutate_rate')
-        rms = getattr(config, 'response_mutate_stdev')
-        rrr = getattr(config, 'response_replace_rate')
-        rim = getattr(config, 'response_init_mean')
-        ris = getattr(config, 'response_init_stdev')
-        rit = getattr(config, 'response_init_type')
-        rmin = getattr(config, 'response_min_value')
-        rmax = getattr(config, 'response_max_value')
+        rmr = config.response_mutate_rate
+        rms = config.response_mutate_stdev
+        rrr = config.response_replace_rate
+        rim = config.response_init_mean
+        ris = config.response_init_stdev
+        rit = config.response_init_type
+        rmin = config.response_min_value
+        rmax = config.response_max_value
 
-        act_mr = getattr(config, 'activation_mutate_rate')
-        act_opt = getattr(config, 'activation_options')
-        agg_mr = getattr(config, 'aggregation_mutate_rate')
-        agg_opt = getattr(config, 'aggregation_options')
+        act_mr = config.activation_mutate_rate
+        act_opt = config.activation_options
+        agg_mr = config.aggregation_mutate_rate
+        agg_opt = config.aggregation_options
 
         if config.single_structural_mutation:
             mutation_success = False

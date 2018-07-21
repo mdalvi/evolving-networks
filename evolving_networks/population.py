@@ -1,5 +1,6 @@
 from evolving_networks.math_util import stat_functions, normalize
 
+
 class Population(object):
     def __init__(self, reproduction, speciation):
         self.reproduction = reproduction

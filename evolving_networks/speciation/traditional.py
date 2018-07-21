@@ -86,15 +86,15 @@ class Traditional(Factory):
                     probabilities = np.array([max(0.0, specie.target_size_float - specie.target_size) for specie in
                                               self.species.values()])
                     probabilities = probabilities / np.sum(probabilities)
-                    self.species[np.random.choice(specie_idxs, 1, p=probabilities)].target_size += 1
+                    self.species[np.random.choice(specie_idxs, 1, p=probabilities)[0]].target_size += 1
         elif target_size_delta > 0:
             specie_idxs = list(self.species.keys())
             i = 0
             while i < target_size_delta:
                 probabilities = np.array([max(0.0, specie.target_size - specie.target_size_float) for specie in
-                                          self.species.keys()])
+                                          self.species.values()])
                 probabilities = probabilities / np.sum(probabilities)
-                specie_idx = np.random.choice(specie_idxs, 1, p=probabilities)
+                specie_idx = np.random.choice(specie_idxs, 1, p=probabilities)[0]
                 if self.species[specie_idx].target_size != 0:
                     if not (specie_idx == self.best_specie_idx and self.species[specie_idx].target_size == 1):
                         self.species[specie_idx].target_size -= 1
@@ -115,7 +115,7 @@ class Traditional(Factory):
             specie.off_spring_asexual = probabilistic_round(specie.off_springs * config.species.off_spring_asexual)
             specie.off_spring_sexual = specie.off_springs - specie.off_spring_asexual
 
-            specie.survivors = probabilistic_round(len(specie.members) * config.species.survivor_rate)
+            specie.survivors = max(1, probabilistic_round(len(specie.members) * config.species.survivor_rate))
 
     def speciate(self, population, generation, config):
 

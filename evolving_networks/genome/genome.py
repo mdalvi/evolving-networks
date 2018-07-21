@@ -7,7 +7,7 @@ from evolving_networks.errors import InvalidConfigurationError, InvalidCondition
 from evolving_networks.genome.genes.connection import Connection
 from evolving_networks.genome.genes.node import Node
 from evolving_networks.genome.helpers import is_cyclic
-from evolving_networks.math_util import normalize
+from evolving_networks.math_util import normalize, probabilistic_round
 
 
 class Genome(object):
@@ -93,11 +93,65 @@ class Genome(object):
     def mutate(self, config):
 
         node_add_rate = config.genome.node_add_rate
-        node_delete_rate = 0.0 if len(self.node_ids['hidden']) < 2 else config.genome.node_delete_rate
+        node_delete_rate = 0.0 if len(self.node_ids['hidden']) < 1 else config.genome.node_delete_rate
         conn_add_rate = config.genome.conn_add_rate
         conn_delete_rate = 0.0 if len(self.connections) < 2 else config.genome.conn_delete_rate
 
-        mutation_probs = np.array([node_add_rate, node_delete_rate, conn_add_rate, conn_delete_rate])
+        if config.genome.single_structural_mutation:
+            mutation_success = False
+            mutation_probs = np.array([node_add_rate, node_delete_rate, conn_add_rate, conn_delete_rate])
+            while True:
+                mutation_probs = mutation_probs / np.sum(mutation_probs)
+                mut_idx = np.random.choice(range(4), 1, p=mutation_probs)[0]
+
+                if mut_idx == 0:
+                    self.mutate_add_node(config)
+                elif mut_idx == 1:
+                    self.mutate_delete_node(config)
+                elif mut_idx == 2:
+                    self.mutate_add_connection(config)
+                else:
+                    self.mutate_delete_connection(config)
+
+                if mutation_success is True:
+                    break
+
+                mutation_probs[mut_idx] = 0.0
+                if np.sum(mutation_probs) == 0.0:
+                    break
+        else:
+            if random.random() < node_add_rate:
+                self.mutate_add_node(config)
+
+            if random.random() < node_delete_rate:
+                self.mutate_delete_node(config)
+
+            if random.random() < conn_add_rate:
+                self.mutate_add_connection(config)
+
+            if random.random() < conn_delete_rate:
+                self.mutate_delete_connection(config)
+
+        mutate_nodes = np.random.choice(list(self.nodes.keys()), probabilistic_round(random.random() * len(self.nodes)))
+        mutate_connections = np.random.choice(list(self.connections.keys()),
+                                              probabilistic_round(random.random() * len(self.connections)))
+
+        for n_id in mutate_nodes:
+            self.nodes[n_id].mutate(config.node)
+        for c_id in mutate_connections:
+            self.connections[c_id].mutate(config.connection)
+
+    def mutate_add_node(self, config):
+        pass
+
+    def mutate_delete_node(self, config):
+        pass
+
+    def mutate_add_connection(self, config):
+        pass
+
+    def mutate_delete_connection(self, config):
+        pass
 
     def crossover_sexual(self, parent_1, parent_2, config):
         fitness_case = 'unequal'

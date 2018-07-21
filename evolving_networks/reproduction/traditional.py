@@ -60,6 +60,7 @@ class Traditional(Factory):
                 assert member_id not in self.ancestors
                 g = Genome(member_id, generation, config.genome)
                 g.crossover_asexual(member_parent_1)
+                g.mutate(config)
                 off_springs.append(g)
 
             inter_species_matings = 0 if non_zero_species == 1 else probabilistic_round(
@@ -91,6 +92,7 @@ class Traditional(Factory):
                     assert member_id not in self.ancestors
                     g = Genome(member_id, generation, config.genome)
                     g.crossover_asexual(member_parent_1)
+                    g.mutate(config)
                     off_springs.append(g)
                 else:
                     m1_idx = np.random.choice(range(specie.survivors), 1, p=reproduce_probs[s_id])[0]
@@ -103,6 +105,7 @@ class Traditional(Factory):
                         assert member_id not in self.ancestors
                         g = Genome(member_id, generation, config.genome)
                         g.crossover_asexual(member_parent_1)
+                        g.mutate(config)
                         off_springs.append(g)
                     else:
                         reproduce_probs_revised = reproduce_probs_revised / reproduce_probs_revised_sum

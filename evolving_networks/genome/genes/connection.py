@@ -72,7 +72,7 @@ class Connection(Gene):
 
         if config.single_structural_mutation:
             mutation_success = False
-            mutation_probs = np.array([wmr + wrr + emr])
+            mutation_probs = np.array([wmr, wrr, emr])
             while True:
                 mutation_probs = mutation_probs / np.sum(mutation_probs)
                 mut_idx = np.random.choice(range(3), 1, p=mutation_probs)[0]
