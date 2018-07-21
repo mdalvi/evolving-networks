@@ -27,6 +27,9 @@ class Genome(object):
         self.fitness = 0.0
         self.adjusted_fitness = 0.0
 
+        self._connectors = set()
+        self._cyclic_connectors = set()
+        self._acyclic_connectors = set()
         self.node_ids = {'all': set(), 'input': set(), 'hidden': set(), 'output': set()}
 
     def __lt__(self, other):
@@ -135,6 +138,7 @@ class Genome(object):
             new_c = c1.crossover(c2)
             assert new_c.id not in self.connections
             self.connections[new_c.id] = new_c
+            self._connectors.add((new_c.source_id, new_c.target_id))
             required_nodes.add(new_c.source_id)
             required_nodes.add(new_c.target_id)
 
@@ -215,6 +219,8 @@ class Genome(object):
             else:
                 raise InvalidConditionalError()
 
+        self._compute_probable_connectors()
+
         self.node_indexer = count(max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr) + 1)
         self.node_indexer_cntr = max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr)
 
@@ -224,6 +230,8 @@ class Genome(object):
             self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
             self.node_ids['all'].add(node.id)
             self.node_ids[node.type].add(node.id)
+
+        self._compute_probable_connectors()
 
         for connection in parent_1.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
@@ -236,6 +244,24 @@ class Genome(object):
         self.node_indexer_cntr = n_id
         assert n_id not in self.nodes
         return n_id
+
+    def _compute_probable_connectors(self):
+        for source_id in self.node_ids['input']:
+            for target_id in self.node_ids['hidden']:
+                self._cyclic_connectors.add((source_id, target_id))
+                self._acyclic_connectors.add((source_id, target_id))
+            for target_id in self.node_ids['output']:
+                self._cyclic_connectors.add((source_id, target_id))
+                self._acyclic_connectors.add((source_id, target_id))
+
+        for source_id in self.node_ids['hidden']:
+            for target_id in self.node_ids['hidden']:
+                self._cyclic_connectors.add((source_id, target_id))
+                if source_id != target_id:
+                    self._acyclic_connectors.add((source_id, target_id))
+            for target_id in self.node_ids['output']:
+                self._cyclic_connectors.add((source_id, target_id))
+                self._acyclic_connectors.add((source_id, target_id))
 
     def initialize(self, node_config, connection_config):
         for _ in range(self.config.num_inputs):
@@ -255,6 +281,8 @@ class Genome(object):
             self._create_node(n_id, 'output', config=node_config)
             self.node_ids['output'].add(n_id)
             self.node_ids['all'].add(n_id)
+
+        self._compute_probable_connectors()
 
         if self.config.initial_connection == 'fs_neat_no_hidden':
             source_id = random.choice(self.node_ids['input'])
@@ -296,7 +324,6 @@ class Genome(object):
                 'Unexpected configuration value [{}]'.format(self.config.initial_connection))
 
     def _compute_full_connectors(self, direct):
-        # TODO: Ensure function does not create cyclic connections unknowingly
         connectors = []
         if self.node_ids['hidden']:
             for source_id in self.node_ids['input']:
@@ -336,3 +363,4 @@ class Genome(object):
         if config is not None:
             connection.initialize(config)
         self.connections[c_id] = connection
+        self._connectors.add((source_id, target_id))
