@@ -30,7 +30,7 @@ def evaluate(genomes, config):
             genome.fitness -= (output[0] - y[0]) ** 2
 
     fit_list = [genome.fitness for _, genome in genomes]
-    print(fit_list)
+    print(sorted(fit_list, reverse=True))
 
 
 if __name__ == "__main__":

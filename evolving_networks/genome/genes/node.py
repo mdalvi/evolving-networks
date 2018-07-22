@@ -106,7 +106,7 @@ class Node(Gene):
         agg_opt = config.aggregation_options
 
         if config.single_structural_mutation:
-            mutation_success = False
+            success = False
             mutation_probs = np.array([bmr, brr, rmr, rrr, act_mr, agg_mr])
             while True:
                 mutation_probs = mutation_probs / np.sum(mutation_probs)
@@ -114,7 +114,7 @@ class Node(Gene):
 
                 if mut_idx == 0:
                     self.bias = clamp(self.bias + random_normal(0.0, bms), bmin, bmax)
-                    mutation_success = True
+                    success = True
                 elif mut_idx == 1:
                     if bit == 'normal':
                         self.bias = clamp(random_normal(bim, bis), bmin, bmax)
@@ -122,10 +122,10 @@ class Node(Gene):
                         self.bias = random_uniform(bim, bis, bmin, bmax)
                     else:
                         raise InvalidConfigurationError()
-                    mutation_success = True
+                    success = True
                 elif mut_idx == 2:
                     self.response = clamp(self.response + random_normal(0.0, rms), rmin, rmax)
-                    mutation_success = True
+                    success = True
                 elif mut_idx == 3:
                     if rit == 'normal':
                         self.response = clamp(random_normal(rim, ris), rmin, rmax)
@@ -133,7 +133,7 @@ class Node(Gene):
                         self.response = random_uniform(rim, ris, rmin, rmax)
                     else:
                         raise InvalidConfigurationError()
-                    mutation_success = True
+                    success = True
                 elif mut_idx == 4:
                     nb_activations = len(act_opt)
                     if nb_activations > 1:
@@ -141,7 +141,7 @@ class Node(Gene):
                         choices.remove(act_opt.index(self.activation))
                         choice_idx = random.choice(choices)
                         self.activation = act_opt[choice_idx]
-                        mutation_success = True
+                        success = True
                 else:
                     nb_aggregations = len(agg_opt)
                     if nb_aggregations > 1:
@@ -149,9 +149,9 @@ class Node(Gene):
                         choices.remove(agg_opt.index(self.aggregation))
                         choice_idx = random.choice(choices)
                         self.aggregation = agg_opt[choice_idx]
-                        mutation_success = True
+                        success = True
 
-                if mutation_success is True:
+                if success is True:
                     break
 
                 mutation_probs[mut_idx] = 0.0

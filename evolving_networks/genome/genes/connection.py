@@ -71,7 +71,7 @@ class Connection(Gene):
         wmax = config.weight_max_value
 
         if config.single_structural_mutation:
-            mutation_success = False
+            success = False
             mutation_probs = np.array([wmr, wrr, emr])
             while True:
                 mutation_probs = mutation_probs / np.sum(mutation_probs)
@@ -79,7 +79,7 @@ class Connection(Gene):
 
                 if mut_idx == 0:
                     self.weight = clamp(self.weight + random_normal(0.0, wms), wmin, wmax)
-                    mutation_success = True
+                    success = True
                 elif mut_idx == 1:
                     if wit == 'normal':
                         self.weight = clamp(random_normal(wim, wis), wmin, wmax)
@@ -87,12 +87,12 @@ class Connection(Gene):
                         self.weight = random_uniform(wim, wis, wmin, wmax)
                     else:
                         raise InvalidConfigurationError()
-                    mutation_success = True
+                    success = True
                 else:
                     self.enabled = True if self.enabled is False else False
-                    mutation_success = True
+                    success = True
 
-                if mutation_success is True:
+                if success is True:
                     break
 
                 mutation_probs[mut_idx] = 0.0

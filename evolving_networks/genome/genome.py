@@ -71,7 +71,7 @@ class Genome(object):
             assert 0.0 <= node_distance <= 1.0
 
         if self.connections or other_genome.connections:
-            nb_max_connections = max(len(self.connections), len(other_genome.connections))
+            nb_max_connections = len(self.connections) + len(other_genome.connections)
             matching_connections = list(set(self.connections.keys()) & set(other_genome.connections.keys()))
             disjoint_excess_connections = list(set(self.connections.keys()) ^ set(other_genome.connections.keys()))
 
@@ -93,27 +93,27 @@ class Genome(object):
     def mutate(self, config):
 
         node_add_rate = config.genome.node_add_rate
-        node_delete_rate = 0.0 if len(self.node_ids['hidden']) < 1 else config.genome.node_delete_rate
+        node_delete_rate = config.genome.node_delete_rate
         conn_add_rate = config.genome.conn_add_rate
-        conn_delete_rate = 0.0 if len(self.connections) < 2 else config.genome.conn_delete_rate
+        conn_delete_rate = config.genome.conn_delete_rate
 
         if config.genome.single_structural_mutation:
-            mutation_success = False
+            success = False
             mutation_probs = np.array([node_add_rate, node_delete_rate, conn_add_rate, conn_delete_rate])
             while True:
                 mutation_probs = mutation_probs / np.sum(mutation_probs)
                 mut_idx = np.random.choice(range(4), 1, p=mutation_probs)[0]
 
                 if mut_idx == 0:
-                    self.mutate_add_node(config)
+                    success = self.mutate_add_node(config)
                 elif mut_idx == 1:
-                    self.mutate_delete_node(config)
+                    success = self.mutate_delete_node()
                 elif mut_idx == 2:
-                    self.mutate_add_connection(config)
+                    success = self.mutate_add_connection(config)
                 else:
-                    self.mutate_delete_connection(config)
+                    success = self.mutate_delete_connection()
 
-                if mutation_success is True:
+                if success is True:
                     break
 
                 mutation_probs[mut_idx] = 0.0
@@ -124,17 +124,22 @@ class Genome(object):
                 self.mutate_add_node(config)
 
             if random.random() < node_delete_rate:
-                self.mutate_delete_node(config)
+                self.mutate_delete_node()
 
             if random.random() < conn_add_rate:
                 self.mutate_add_connection(config)
 
             if random.random() < conn_delete_rate:
-                self.mutate_delete_connection(config)
+                self.mutate_delete_connection()
 
-        mutate_nodes = np.random.choice(list(self.nodes.keys()), probabilistic_round(random.random() * len(self.nodes)))
-        mutate_connections = np.random.choice(list(self.connections.keys()),
-                                              probabilistic_round(random.random() * len(self.connections)))
+        mutate_nodes, mutate_connections = [], []
+        nb_mutate_nodes = probabilistic_round(random.random() * len(self.nodes))
+        nb_mutate_connections = probabilistic_round(random.random() * len(self.connections))
+
+        if nb_mutate_nodes > 0:
+            mutate_nodes = np.random.choice(list(self.nodes.keys()), nb_mutate_nodes)
+        if nb_mutate_connections > 0 and len(self.connections) > 0:
+            mutate_connections = np.random.choice(list(self.connections.keys()), nb_mutate_connections)
 
         for n_id in mutate_nodes:
             self.nodes[n_id].mutate(config.node)
@@ -142,16 +147,118 @@ class Genome(object):
             self.connections[c_id].mutate(config.connection)
 
     def mutate_add_node(self, config):
-        pass
+        if len(self.connections) == 0:
+            return False
 
-    def mutate_delete_node(self, config):
-        pass
+        connection = random.choice(list(self.connections.values()))
+        n_id = self._next_node_id()
+        self._create_node(n_id, 'hidden', config=config.node)
+        self.node_ids['hidden'].add(n_id)
+        self.node_ids['all'].add(n_id)
+
+        self._compute_probable_connectors(n_id)
+
+        connection.enabled = False
+        source_id = connection.source_id
+        target_id = connection.target_id
+        self._create_connection(source_id, n_id, connection.weight, True)
+        self._create_connection(n_id, target_id, 1.0, True)
+        return True
+
+    def mutate_delete_node(self):
+        if len(self.node_ids['hidden']) < 1:
+            return False
+
+        n_id = random.choice(list(self.node_ids['hidden']))
+        connections_to_delete = set()
+        for c_id, connection in self.connections.items():
+            if connection.source_id == n_id or connection.target_id == n_id:
+                connections_to_delete.add(c_id)
+
+        for c_id in connections_to_delete:
+            self._connectors.remove((self.connections[c_id].source_id, self.connections[c_id].target_id))
+            del self.connections[c_id]
+
+        self.node_ids['all'].remove(n_id)
+        self.node_ids['hidden'].remove(n_id)
+        del self.nodes[n_id]
+
+        self._cyclic_connectors = {(x, y) for x, y in self._cyclic_connectors if x != n_id and y != n_id}
+        self._acyclic_connectors = {(x, y) for x, y in self._acyclic_connectors if x != n_id and y != n_id}
+        return True
 
     def mutate_add_connection(self, config):
-        pass
+        if config.genome.feed_forward:
+            possible_connectors = self._acyclic_connectors - self._connectors
+        else:
+            possible_connectors = self._cyclic_connectors - self._connectors
 
-    def mutate_delete_connection(self, config):
-        pass
+        if len(possible_connectors) == 0:
+            return False
+
+        while len(possible_connectors) > 0:
+            connector = random.choice(list(possible_connectors))
+
+            if config.genome.feed_forward:
+                if is_cyclic(self.connections, connector[0], connector[1]) is True:
+                    possible_connectors.remove(connector)
+                    continue
+
+            self._create_connection(connector[0], connector[1], config=config.connection)
+            return True
+        return False
+
+    def mutate_delete_connection(self):
+        if len(self.connections) < 2:
+            return False
+
+        connection = random.choice(list(self.connections.values()))
+        c_id = connection.id
+        source_id = connection.source_id
+        target_id = connection.target_id
+        self._connectors.remove((source_id, target_id))
+        del self.connections[c_id]
+
+        if source_id == target_id:
+            if self._is_redundant_node(source_id):
+                self.node_ids['all'].remove(source_id)
+                self.node_ids['hidden'].remove(source_id)
+                del self.nodes[source_id]
+
+                self._cyclic_connectors = {(x, y) for x, y in self._cyclic_connectors if
+                                           x != source_id and y != source_id}
+                self._acyclic_connectors = {(x, y) for x, y in self._acyclic_connectors if
+                                            x != source_id and y != source_id}
+        else:
+            if self._is_redundant_node(source_id):
+                self.node_ids['all'].remove(source_id)
+                self.node_ids['hidden'].remove(source_id)
+                del self.nodes[source_id]
+
+                self._cyclic_connectors = {(x, y) for x, y in self._cyclic_connectors if
+                                           x != source_id and y != source_id}
+                self._acyclic_connectors = {(x, y) for x, y in self._acyclic_connectors if
+                                            x != source_id and y != source_id}
+            if self._is_redundant_node(target_id):
+                self.node_ids['all'].remove(target_id)
+                self.node_ids['hidden'].remove(target_id)
+                del self.nodes[target_id]
+
+                self._cyclic_connectors = {(x, y) for x, y in self._cyclic_connectors if
+                                           x != target_id and y != target_id}
+                self._acyclic_connectors = {(x, y) for x, y in self._acyclic_connectors if
+                                            x != target_id and y != target_id}
+        return True
+
+    def _is_redundant_node(self, n_id):
+        if self.nodes[n_id].type == 'input' or self.nodes[n_id].type == 'output':
+            return False
+
+        for connector in self._connectors:
+            if connector[0] == n_id or connector[1] == n_id:
+                return False
+
+        return True
 
     def crossover_sexual(self, parent_1, parent_2, config):
         fitness_case = 'unequal'
@@ -172,18 +279,18 @@ class Genome(object):
         c_list_1 = sorted(list(connection_set_1.keys()))
         c_list_2 = sorted(list(connection_set_2.keys()))
 
-        if len(c_list_1) < len(c_list_2):
-            c_list_1.extend([-1] * (max(len(c_list_1), len(c_list_2)) - min(len(c_list_1), len(c_list_2))))
-        else:
-            c_list_2.extend([-1] * (max(len(c_list_1), len(c_list_2)) - min(len(c_list_1), len(c_list_2))))
-
-        matched_connections, unmatched_connections = [], []
-        for x, y in zip(c_list_1, c_list_2):
-            if x == y or x == -1 or y == -1:
-                matched_connections.append((x, y))
+        matched_connections, unmatched_connections = set(), set()
+        for x in c_list_1:
+            if x in c_list_2:
+                matched_connections.add((x, x))
             else:
-                unmatched_connections.append((x, -1))
-                unmatched_connections.append((-1, y))
+                unmatched_connections.add((x, -1))
+
+        for y in c_list_2:
+            if y in c_list_1:
+                matched_connections.add((y, y))
+            else:
+                unmatched_connections.add((-1, y))
 
         required_nodes = set()
         for c1_idx, c2_idx in matched_connections:
@@ -198,7 +305,7 @@ class Genome(object):
 
         for c1_idx, c2_idx in unmatched_connections:
             if fitness_case == 'equal':
-                if random.random < 0.5:
+                if random.random() < 0.5:
                     if c1_idx != -1:
                         c = connection_set_1[c1_idx]
                         if config.genome.feed_forward:
@@ -232,18 +339,18 @@ class Genome(object):
         n_list_1 = sorted(list(node_set_1.keys()))
         n_list_2 = sorted(list(node_set_2.keys()))
 
-        if len(n_list_1) < len(n_list_1):
-            n_list_1.extend([-1] * (max(len(n_list_1), len(n_list_2)) - min(len(n_list_1), len(n_list_2))))
-        else:
-            n_list_2.extend([-1] * (max(len(n_list_1), len(n_list_2)) - min(len(n_list_1), len(n_list_2))))
-
-        node_pairs = []
-        for x, y in zip(n_list_1, n_list_2):
-            if x == y or x == -1 or y == -1:
-                node_pairs.append((x, y))
+        node_pairs = set()
+        for x in n_list_1:
+            if x in n_list_2:
+                node_pairs.add((x, x))
             else:
-                node_pairs.append((x, -1))
-                node_pairs.append((-1, y))
+                node_pairs.add((x, -1))
+
+        for y in n_list_2:
+            if y in n_list_1:
+                node_pairs.add((y, y))
+            else:
+                node_pairs.add((-1, y))
 
         for n1_idx, n2_idx in node_pairs:
             if n1_idx == n2_idx:
@@ -299,23 +406,36 @@ class Genome(object):
         assert n_id not in self.nodes
         return n_id
 
-    def _compute_probable_connectors(self):
-        for source_id in self.node_ids['input']:
-            for target_id in self.node_ids['hidden']:
-                self._cyclic_connectors.add((source_id, target_id))
-                self._acyclic_connectors.add((source_id, target_id))
-            for target_id in self.node_ids['output']:
-                self._cyclic_connectors.add((source_id, target_id))
-                self._acyclic_connectors.add((source_id, target_id))
-
-        for source_id in self.node_ids['hidden']:
-            for target_id in self.node_ids['hidden']:
-                self._cyclic_connectors.add((source_id, target_id))
-                if source_id != target_id:
+    def _compute_probable_connectors(self, n_id=None):
+        if n_id is None:
+            for source_id in self.node_ids['input']:
+                for target_id in self.node_ids['hidden']:
+                    self._cyclic_connectors.add((source_id, target_id))
                     self._acyclic_connectors.add((source_id, target_id))
+                for target_id in self.node_ids['output']:
+                    self._cyclic_connectors.add((source_id, target_id))
+                    self._acyclic_connectors.add((source_id, target_id))
+
+            for source_id in self.node_ids['hidden']:
+                for target_id in self.node_ids['hidden']:
+                    self._cyclic_connectors.add((source_id, target_id))
+                    if source_id != target_id:
+                        self._acyclic_connectors.add((source_id, target_id))
+                for target_id in self.node_ids['output']:
+                    self._cyclic_connectors.add((source_id, target_id))
+                    self._acyclic_connectors.add((source_id, target_id))
+        else:
+            for source_id in self.node_ids['input']:
+                self._cyclic_connectors.add((source_id, n_id))
+                self._acyclic_connectors.add((source_id, n_id))
+            for source_id in self.node_ids['hidden']:
+                for target_id in self.node_ids['hidden']:
+                    self._cyclic_connectors.add((source_id, target_id))
+                    if source_id != target_id:
+                        self._acyclic_connectors.add((source_id, target_id))
             for target_id in self.node_ids['output']:
-                self._cyclic_connectors.add((source_id, target_id))
-                self._acyclic_connectors.add((source_id, target_id))
+                self._cyclic_connectors.add((n_id, target_id))
+                self._acyclic_connectors.add((n_id, target_id))
 
     def initialize(self, node_config, connection_config):
         for _ in range(self.config.num_inputs):
