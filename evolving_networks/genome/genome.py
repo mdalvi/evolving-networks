@@ -4,6 +4,7 @@
 # ==============
 
 [1] https://github.com/CodeReclaimers/neat-python/blob/master/neat/graphs.py
+[2] http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
 
 """
 
@@ -169,8 +170,8 @@ class Genome(object):
         connection.enabled = False
         source_id = connection.source_id
         target_id = connection.target_id
-        self._create_connection(source_id, n_id, connection.weight, True)
-        self._create_connection(n_id, target_id, 1.0, True)
+        self._create_connection(source_id, n_id, 1.0, True)  # [2] pg.108
+        self._create_connection(n_id, target_id, connection.weight, True)  # [2] pg.108
         return True
 
     def mutate_delete_node(self):
