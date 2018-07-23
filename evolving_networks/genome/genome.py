@@ -1,3 +1,12 @@
+"""
+# ==============
+# References
+# ==============
+
+[1] https://github.com/CodeReclaimers/neat-python/blob/master/neat/graphs.py
+
+"""
+
 import random
 from itertools import count
 
@@ -6,7 +15,6 @@ import numpy as np
 from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.genome.genes.connection import Connection
 from evolving_networks.genome.genes.node import Node
-from evolving_networks.genome.helpers import is_cyclic
 from evolving_networks.math_util import normalize, probabilistic_round
 
 
@@ -200,7 +208,7 @@ class Genome(object):
             connector = random.choice(list(possible_connectors))
 
             if config.genome.feed_forward:
-                if is_cyclic(self.connections, connector[0], connector[1]) is True:
+                if self._is_cyclic(connector[0], connector[1]) is True:
                     possible_connectors.remove(connector)
                     continue
 
@@ -260,6 +268,25 @@ class Genome(object):
 
         return True
 
+    def _is_cyclic(self, source_id, target_id):  # [1]
+        if source_id == target_id:
+            return True
+
+        visited = {target_id}
+        while True:
+            num_added = 0
+            for connection in self.connections.values():
+                a, b = connection.source_id, connection.target_id
+                if a in visited and b not in visited:
+                    if b == source_id:
+                        return True
+
+                    visited.add(b)
+                    num_added += 1
+
+            if num_added == 0:
+                return False
+
     def crossover_sexual(self, parent_1, parent_2, config):
         fitness_case = 'unequal'
         if parent_1.adjusted_fitness > parent_2.adjusted_fitness:
@@ -309,7 +336,7 @@ class Genome(object):
                     if c1_idx != -1:
                         c = connection_set_1[c1_idx]
                         if config.genome.feed_forward:
-                            if is_cyclic(self.connections, c.source_id, c.target_id) is True:
+                            if self._is_cyclic(c.source_id, c.target_id) is True:
                                 continue
                         self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
                         required_nodes.add(c.source_id)
@@ -318,7 +345,7 @@ class Genome(object):
                     if c2_idx != -1:
                         c = connection_set_2[c2_idx]
                         if config.genome.feed_forward:
-                            if is_cyclic(self.connections, c.source_id, c.target_id) is True:
+                            if self._is_cyclic(c.source_id, c.target_id) is True:
                                 continue
                         self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
                         required_nodes.add(c.source_id)
@@ -327,7 +354,7 @@ class Genome(object):
                 if c1_idx != -1:
                     c = connection_set_1[c1_idx]
                     if config.genome.feed_forward:
-                        if is_cyclic(self.connections, c.source_id, c.target_id) is True:
+                        if self._is_cyclic(c.source_id, c.target_id) is True:
                             continue
                     self._create_connection(c.source_id, c.target_id, c.weight, c.enabled)
                     required_nodes.add(c.source_id)

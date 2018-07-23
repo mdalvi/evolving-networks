@@ -1,18 +1,198 @@
+import numpy as np
+import pandas as pd
+from sklearn.cluster import KMeans as k_means
+
+from evolving_networks.math_util import mean, probabilistic_round
 from evolving_networks.speciation.factory import Factory
+from evolving_networks.speciation.helpers import genomic_distance
+from evolving_networks.speciation.species import Species
 
 
 class KMeans(Factory):
     def __init__(self):
-        super(Factory, self).__init__()
-        self.species = dict()
+        super(KMeans, self).__init__()
+        self.species = {}
         self._genome_to_species = {}
+        self.best_genome = None
+        self.best_adjusted_fitness = float('-Infinity')
+        self.best_specie_idx = None
+        self.min_specie_size = float('+Infinity')
+        self.max_specie_size = float('-Infinity')
+
+    def reset_specie_stats(self):
+        for specie in self.species.values():
+            specie.reset_stats()
+
+    def sort_specie_genomes(self):
+        min_specie_size, max_specie_size = float('+Infinity'), float('-Infinity')
+        for specie in self.species.values():
+            specie.members = sorted(specie.members, reverse=True)
+            min_specie_size = min(min_specie_size, len(specie.members))
+            max_specie_size = max(max_specie_size, len(specie.members))
+
+        self.min_specie_size = min_specie_size
+        self.max_specie_size = max_specie_size
+
+    def calc_best_stats(self):
+
+        best_genome = None
+        best_adjusted_fitness = float('-Infinity')
+        best_specie_idx = None
+
+        for s_id, specie in self.species.items():
+            if specie.members[0].adjusted_fitness > best_adjusted_fitness:
+                best_genome = specie.members[0]
+                best_adjusted_fitness = specie.members[0].adjusted_fitness
+                best_specie_idx = s_id
+
+        self.best_genome = best_genome
+        self.best_adjusted_fitness = best_adjusted_fitness
+        self.best_specie_idx = best_specie_idx
+
+    def _purge_stagnant_species(self, generation, config):
+        species_data = []
+        for s_id, specie in self.species.items():
+            if specie.fitness_history:
+                historical_best_fitness = max(specie.fitness_history)
+            else:
+                historical_best_fitness = float('-Infinity')
+
+            fitness = specie.adjusted_fitness
+            specie.fitness_history.append(fitness)
+            if fitness > historical_best_fitness:
+                specie.last_improved = generation
+
+            species_data.append((s_id, specie, fitness))
+
+        # Sort in ascending fitness order.
+        species_data.sort(key=lambda x: x[2])
+
+        nb_remaining = len(species_data)
+        for idx, (s_id, specie, _) in enumerate(species_data):
+            if s_id == self.best_specie_idx:
+                continue
+
+            is_stagnant = False
+            stagnant_time = generation - specie.last_improved
+            if nb_remaining > config.reproduction.species_elitism:
+                is_stagnant = stagnant_time >= config.species.max_stagnation
+
+            if (len(species_data) - idx) <= config.reproduction.species_elitism:
+                is_stagnant = False
+
+            if is_stagnant:
+                del self.species[s_id]
+                nb_remaining -= 1
+
+    def calc_specie_stats(self, generation, config):
+        target_size_sum = 0
+        mean_fitness_sum = 0.0
+
+        for specie in self.species.values():
+            members_fitness = [member.adjusted_fitness for member in specie.members]
+            specie.members_fitness = members_fitness
+            specie.adjusted_fitness = specie.fitness_criterion(members_fitness)
+            specie.adjusted_fitness_mean = mean(members_fitness)
+
+        self._purge_stagnant_species(generation, config)
+
+        for specie in self.species.values():
+            mean_fitness_sum += specie.adjusted_fitness_mean
+
+        if mean_fitness_sum == 0.0:
+            target_size_float = config.neat.population_size / len(self.species)
+            for specie in self.species.values():
+                specie.target_size_float = target_size_float
+                specie.target_size = probabilistic_round(target_size_float)
+                target_size_sum += specie.target_size
+        else:
+            for s_id, specie in self.species.items():
+                specie.target_size_float = (
+                                               specie.adjusted_fitness_mean / mean_fitness_sum) * config.neat.population_size
+                target_size = probabilistic_round(specie.target_size_float)
+                if target_size == 0 and s_id == self.best_specie_idx:
+                    target_size = 1
+                specie.target_size = target_size
+                target_size_sum += specie.target_size
+
+        target_size_delta = target_size_sum - config.neat.population_size
+        if target_size_delta < 0:
+            if target_size_delta == -1:
+                self.species[self.best_specie_idx].target_size += 1
+            else:
+                specie_idxs = list(self.species.keys())
+                for _ in range(abs(target_size_delta)):
+                    probabilities = np.array([max(0.0, specie.target_size_float - specie.target_size) for specie in
+                                              self.species.values()])
+                    probabilities = probabilities / np.sum(probabilities)
+                    self.species[np.random.choice(specie_idxs, 1, p=probabilities)[0]].target_size += 1
+        elif target_size_delta > 0:
+            specie_idxs = list(self.species.keys())
+            i = 0
+            while i < target_size_delta:
+                probabilities = np.array([max(0.0, specie.target_size - specie.target_size_float) for specie in
+                                          self.species.values()])
+                probabilities = probabilities / np.sum(probabilities)
+                specie_idx = np.random.choice(specie_idxs, 1, p=probabilities)[0]
+                if self.species[specie_idx].target_size != 0:
+                    if not (specie_idx == self.best_specie_idx and self.species[specie_idx].target_size == 1):
+                        self.species[specie_idx].target_size -= 1
+                        i += 1
+
+        for s_id, specie in self.species.items():
+            if specie.target_size == 0:
+                specie.elites = 0
+                continue
+
+            elites = probabilistic_round(len(specie.members) * config.species.elitism)
+            specie.elites = min(elites, specie.target_size)
+
+            if s_id == self.best_specie_idx and elites == 0:
+                specie.elites = 1
+
+            specie.off_springs = specie.target_size - specie.elites
+            specie.off_spring_asexual = probabilistic_round(specie.off_springs * config.species.off_spring_asexual)
+            specie.off_spring_sexual = specie.off_springs - specie.off_spring_asexual
+
+            specie.survivors = max(1, probabilistic_round(len(specie.members) * config.species.survivor_rate))
 
     def speciate(self, population, generation, config):
-        raise NotImplementedError()
+        distance_cache = {}
+        distance_matrix = {g_id: [] for g_id in population.keys()}
+        for g_id_1, member_1 in population.items():
+            for g_id_2, member_2 in population.items():
+                if (g_id_1, g_id_2) in distance_cache:
+                    distance_matrix[g_id_2].append(distance_cache[(g_id_1, g_id_2)])
+                else:
+                    d = genomic_distance(member_1, member_2, config)
+                    distance_cache[(g_id_1, g_id_2)] = d
+                    distance_cache[(g_id_2, g_id_1)] = d
+                    distance_matrix[g_id_2].append(d)
+        df = pd.DataFrame(distance_matrix)
+        clusters = k_means(n_clusters=config.reproduction.k_means_species_size, random_state=0).fit_predict(df.values)
+
+        members = {s_id: [] for s_id in range(config.reproduction.k_means_species_size)}
+        for g_id, s_id in zip(population.keys(), clusters):
+            members[s_id].append(g_id)
+
+        self._genome_to_species = {}
+        for s_id in set(clusters):
+            s = self.species.get(s_id)
+            if s is None:
+                s = Species(s_id, generation, config.species)
+
+            specie_members = []
+            for genome_id in members[s_id]:
+                self._genome_to_species[genome_id] = s_id
+                specie_members.append(population[genome_id])
+
+            s.representative = population[members[s_id][0]]
+            s.members = specie_members
+            self.species[s_id] = s
 
     def get_species_id(self, genome_id):
         return self._genome_to_species[genome_id]
 
     def get_species(self, genome_id):
-        specie_id = self._genome_to_species[genome_id]
-        return self.species[specie_id]
+        s_id = self._genome_to_species[genome_id]
+        return self.species[s_id]

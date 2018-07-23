@@ -11,5 +11,6 @@ class InverseSquareRootLinearUnit(Activation):
 
     @classmethod
     def activate(cls, z, alpha=3.0):
-        result = z if z > 0.0 else InverseSquareRootUnit.activate(z, alpha)
+        isru_result, _ = InverseSquareRootUnit.activate(z, alpha)
+        result = z if z > 0.0 else isru_result
         return result, result > cls.midpoint

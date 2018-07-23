@@ -49,7 +49,39 @@ class Traditional(Factory):
         self.best_adjusted_fitness = best_adjusted_fitness
         self.best_specie_idx = best_specie_idx
 
-    def calc_specie_stats(self, config):
+    def _purge_stagnant_species(self, generation, config):
+        species_data = []
+        for s_id, specie in self.species.items():
+            if specie.fitness_history:
+                historical_best_fitness = max(specie.fitness_history)
+            else:
+                historical_best_fitness = float('-Infinity')
+
+            fitness = specie.adjusted_fitness
+            specie.fitness_history.append(fitness)
+            if fitness > historical_best_fitness:
+                specie.last_improved = generation
+
+            species_data.append((s_id, specie, fitness))
+
+        # Sort in ascending fitness order.
+        species_data.sort(key=lambda x: x[2])
+
+        nb_remaining = len(species_data)
+        for (s_id, specie, _) in species_data:
+            if s_id == self.best_specie_idx:
+                continue
+
+            is_stagnant = False
+            stagnant_time = generation - specie.last_improved
+            if nb_remaining > config.reproduction.species_elitism:
+                is_stagnant = stagnant_time >= config.species.max_stagnation
+
+            if is_stagnant:
+                del self.species[s_id]
+                nb_remaining -= 1
+
+    def calc_specie_stats(self, generation, config):
         target_size_sum = 0
         mean_fitness_sum = 0.0
 
@@ -59,6 +91,9 @@ class Traditional(Factory):
             specie.adjusted_fitness = specie.fitness_criterion(members_fitness)
             specie.adjusted_fitness_mean = mean(members_fitness)
 
+        self._purge_stagnant_species(generation, config)
+
+        for specie in self.species.values():
             mean_fitness_sum += specie.adjusted_fitness_mean
 
         if mean_fitness_sum == 0.0:
@@ -69,7 +104,8 @@ class Traditional(Factory):
                 target_size_sum += specie.target_size
         else:
             for s_id, specie in self.species.items():
-                specie.target_size_float = (specie.adjusted_fitness_mean / mean_fitness_sum) * config.neat.population_size
+                specie.target_size_float = (
+                                               specie.adjusted_fitness_mean / mean_fitness_sum) * config.neat.population_size
                 target_size = probabilistic_round(specie.target_size_float)
                 if target_size == 0 and s_id == self.best_specie_idx:
                     target_size = 1
@@ -125,13 +161,7 @@ class Traditional(Factory):
         unspeciated = set(population.keys())
         compatibility_threshold = config.species.compatibility_threshold
 
-        # Uniform chance of electing fresh new representative
-        species_election = [s_id for s_id in self.species.keys()]
-
-        while len(species_election) > 0:
-            s_id = random.choice(species_election)
-            specie = self.species[s_id]
-
+        for s_id, specie in self.species.items():
             specie_distances = []
             for genome_id in unspeciated:
                 genome = population[genome_id]
@@ -144,7 +174,26 @@ class Traditional(Factory):
             members[s_id] = [new_representative_id]
             unspeciated.remove(new_representative_id)
 
-            species_election.remove(s_id)
+        # # Uniform chance of electing fresh new representative
+        # species_election = [s_id for s_id in self.species.keys()]
+        #
+        # while len(species_election) > 0:
+        #     s_id = random.choice(species_election)
+        #     specie = self.species[s_id]
+        #
+        #     specie_distances = []
+        #     for genome_id in unspeciated:
+        #         genome = population[genome_id]
+        #         d = genomic_distance(specie.representative, genome, config)
+        #         specie_distances.append((d, genome))
+        #
+        #     _, new_representative = min(specie_distances, key=lambda x: x[0])
+        #     new_representative_id = new_representative.id
+        #     representatives[s_id] = new_representative_id
+        #     members[s_id] = [new_representative_id]
+        #     unspeciated.remove(new_representative_id)
+        #
+        #     species_election.remove(s_id)
 
         while unspeciated:
             genome_id = unspeciated.pop()

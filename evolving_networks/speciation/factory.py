@@ -14,7 +14,10 @@ class Factory(object):
     def calc_best_stats(self):
         raise NotImplementedError()
 
-    def calc_specie_stats(self, config):
+    def _purge_stagnant_species(self, generation, config):
+        raise NotImplementedError()
+
+    def calc_specie_stats(self, generation, config):
         raise NotImplementedError()
 
     def speciate(self, population, generation, config):

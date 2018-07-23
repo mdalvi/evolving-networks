@@ -20,5 +20,6 @@ class Selu(Activation):
 
     @classmethod
     def activate(cls, z, alpha=1.6732632423543772848170429916717, scale=1.0507009873554804934193349852946):  # [1], [2]
-        result = scale * Elu.activate(z, alpha)
+        elu_result, _ = Elu.activate(z, alpha)
+        result = scale * elu_result
         return result, result > cls.midpoint

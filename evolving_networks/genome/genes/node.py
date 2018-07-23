@@ -136,7 +136,7 @@ class Node(Gene):
                     success = True
                 elif mut_idx == 4:
                     nb_activations = len(act_opt)
-                    if nb_activations > 1:
+                    if self.type != 'output' and nb_activations > 1:
                         choices = list(range(nb_activations))
                         choices.remove(act_opt.index(self.activation))
                         choice_idx = random.choice(choices)

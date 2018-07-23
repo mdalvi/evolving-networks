@@ -53,8 +53,10 @@ class Population(object):
             self.speciation.reset_specie_stats()
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
-            self.speciation.calc_specie_stats(config)
+            self.speciation.calc_specie_stats(self.generation, config)
             self.population = self.reproduction.reproduce(self.speciation.species, config.neat.population_size,
                                                           self.generation, config)
+            print(self.generation, len(self.speciation.species))
             self.speciation.speciate(self.population, self.generation, config)
             self.generation += 1
+

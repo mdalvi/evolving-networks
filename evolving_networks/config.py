@@ -68,7 +68,7 @@ class Config(object):
 
 
 class DefaultReproductionConfig(object):
-    __params = [ConfigParameter('elitism', int)]
+    __params = [ConfigParameter('species_elitism', int), ConfigParameter('k_means_species_size', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
