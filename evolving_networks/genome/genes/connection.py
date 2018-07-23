@@ -41,7 +41,7 @@ class Connection(Gene):
 
         self.enabled = config.enabled_default
 
-    def distance(self, other_connection, config):
+    def _distance(self, other_connection, config):
         wmin = config.weight_min_value
         wmax = config.weight_max_value
         wdiff_min, wdiff_max = 0.0, abs(wmin - wmax)
@@ -49,13 +49,23 @@ class Connection(Gene):
         ediff = 0.0 if self.enabled == other_connection.enabled else 1.0
         return normalize(0.0, 2.0, wdiff + ediff, 0.0, 1.0) * config.compatibility_weight_contribution
 
+    def distance(self, other_connection, config):
+        wmin = config.weight_min_value
+        wmax = config.weight_max_value
+        wdiff_min, wdiff_max = 0.0, abs(wmin - wmax)
+        return normalize(wdiff_min, wdiff_max, abs(self.weight - other_connection.weight), 0.0, 1.0)
+
     def crossover(self, other_connection):
         assert self.id == other_connection.id  # [1][106,109]
         assert self.source_id == other_connection.source_id  # [1][106,109]
         assert self.target_id == other_connection.target_id  # [1][106,109]
 
-        weight = self.weight if random.random() < 0.5 else other_connection.weight
-        enabled = self.enabled if random.random() < 0.5 else other_connection.enabled
+        if random.random() < 0.5:
+            weight = self.weight
+            enabled = self.enabled
+        else:
+            weight = other_connection.weight
+            enabled = other_connection.enabled
         connection = self.__class__(self.id, self.source_id, self.target_id, weight, enabled)
         return connection
 

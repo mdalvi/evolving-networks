@@ -4,7 +4,7 @@ from evolving_networks.config import Config
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.population import Population
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
-# from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
+from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 from evolving_networks.speciation.kmeans import KMeans as KMeansSpeciation
 
 # 2-input XOR inputs and expected outputs.
@@ -13,7 +13,7 @@ xor_outputs = [(0.0,), (1.0,), (1.0,), (0.0,)]
 
 
 def main():
-    config = Config(filename='config/config_2.ini')
+    config = Config(filename='config/config_1.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = KMeansSpeciation()
     population = Population(reproduction=reproduction_factory, speciation=speciation_factory)

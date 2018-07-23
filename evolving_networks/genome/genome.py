@@ -61,7 +61,7 @@ class Genome(object):
             return self.birth_generation >= other.birth_generation
         return self.fitness >= other.fitness
 
-    def distance(self, other_genome, config):
+    def _distance(self, other_genome, config):
         node_distance, connection_distance = 0.0, 0.0
         if self.nodes or other_genome.nodes:
             nb_max_nodes = max(len(self.nodes), len(other_genome.nodes))
@@ -98,6 +98,54 @@ class Genome(object):
         genomic_distance = (node_distance + connection_distance) / 2.0
         assert 0.0 <= genomic_distance <= 1.0
         return genomic_distance
+
+    def distance(self, other_genome, config):
+        dist = 0.0
+        c1 = 1.0
+        c2 = 1.0
+        c3 = 0.4
+
+        conn_1_cnt = len(self.connections)
+        conn_2_cnt = len(other_genome.connections)
+        if conn_1_cnt != 0 and conn_2_cnt != 0:
+            c_list_1 = sorted(list(self.connections.keys()))
+            c_list_2 = sorted(list(other_genome.connections.keys()))
+
+            nb_disjoint, nb_excess = 0, 0
+            excess_threshold = min(max(c_list_1), max(c_list_2))
+            for x in c_list_1:
+                if x not in c_list_2:
+                    if x <= excess_threshold:
+                        nb_disjoint += 1
+                    else:
+                        nb_excess += 1
+            for x in c_list_2:
+                if x not in c_list_1:
+                    if x <= excess_threshold:
+                        nb_disjoint += 1
+                    else:
+                        nb_excess += 1
+
+            dist += (c1 * normalize(0, max(len(c_list_1), len(c_list_2)), nb_disjoint, 0.0, 1.0))
+            dist += (c2 * normalize(0, max(len(c_list_1), len(c_list_2)), nb_excess, 0.0, 1.0))
+        elif conn_1_cnt == 0 and conn_2_cnt == 0:
+            dist += 0.0
+        else:
+            dist += (c2 * 1.0)
+
+        c_dist = 0.0
+        if conn_1_cnt != 0 or conn_2_cnt != 0:
+            matched_connections = list(set(self.connections.keys()) & set(other_genome.connections.keys()))
+            for c_id in matched_connections:
+                c_dist += self.connections[c_id].distance(other_genome.connections[c_id], config.connection)
+
+            if len(matched_connections) > 0:
+                c_dist = c_dist / len(matched_connections)
+
+        dist += (c3 * c_dist)
+        # dist = (dist / 3.0)
+        # assert 0.0 <= dist <= 1.0
+        return dist
 
     def mutate(self, config):
 

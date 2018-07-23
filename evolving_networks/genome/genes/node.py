@@ -74,10 +74,16 @@ class Node(Gene):
         assert self.id == other_node.id  # [1][106,109]
         assert self.type == other_node.type
 
-        bias = self.bias if random.random() < 0.5 else other_node.bias
-        response = self.response if random.random() < 0.5 else other_node.response
-        activation = self.activation if random.random() < 0.5 else other_node.activation
-        aggregation = self.aggregation if random.random() < 0.5 else other_node.aggregation
+        if random.random() < 0.5:
+            bias = self.bias
+            response = self.response
+            activation = self.activation
+            aggregation = self.aggregation
+        else:
+            bias = other_node.bias
+            response = other_node.response
+            activation = other_node.activation
+            aggregation = other_node.aggregation
         node = self.__class__(self.id, self.type, bias, response, activation, aggregation)
         return node
 
