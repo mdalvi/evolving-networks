@@ -1,5 +1,5 @@
-from evolving_networks.activations.activation_function_set import ActivationFunctionSet
-from evolving_networks.aggregations import AggregationFunctionSet
+from evolving_networks.activations.activations import Activations
+from evolving_networks.aggregations import Aggregations
 from evolving_networks.config import Config
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.population import Population
@@ -26,7 +26,7 @@ def evaluate(genomes, config):
     for genome_id, genome in genomes:
         genome.fitness = 4.0
         ff_network = FeedForwardNetwork(genome, config)
-        ff_network.initialize(ActivationFunctionSet(), AggregationFunctionSet())
+        ff_network.initialize(Activations(), Aggregations())
         for x, y in zip(xor_inputs, xor_outputs):
             output = ff_network.activate(x)
             genome.fitness -= (output[0] - y[0]) ** 2

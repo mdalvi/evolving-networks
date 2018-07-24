@@ -11,15 +11,16 @@ class Node(Protein):
         self.activation = activation
         self.aggregation = aggregation
 
-        self.incoming_inputs = []
-        self.output = 0.0
-        self.is_activated = False
-        self.is_fired = False
+        self.incoming = []
+        self.outgoing = 0.0
+
+        self.fired = False
+        self.activated = False
 
     def activate(self, inputs):
-        if len(inputs) == 0:
-            self.output, self.is_fired = 0.0, True
+        if inputs:
+            self.outgoing, self.fired = self.activation.activate((self.aggregation(inputs) * self.response) + self.bias)
         else:
-            self.output, self.is_fired = self.activation.activate(
-                (self.aggregation(inputs) * self.response) + self.bias)
-        self.is_activated = True
+            self.outgoing = 0.0
+            self.fired = False
+        self.activated = True

@@ -2,7 +2,7 @@ class Phenome(object):
     def __init__(self):
         pass
 
-    def initialize(self, act_func_set, agg_func_set):
+    def initialize(self, activations, aggregations):
         raise NotImplementedError()
 
     def activate(self, inputs):

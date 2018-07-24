@@ -23,7 +23,7 @@ from evolving_networks.activations.tanh import Tanh
 from evolving_networks.errors import InvalidActivationError
 
 
-class ActivationFunctionSet(object):
+class Activations(object):
     def __init__(self):
         self.functions = {}
         self._add('sigmoid', Sigmoid)

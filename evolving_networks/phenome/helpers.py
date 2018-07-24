@@ -1,27 +1,38 @@
-def build_essential_nodes(node_keys, connections):
-    essentials = {}
-    for node_key in node_keys:
-        e = [[node_key]]
+def calc_required_depth(node_ids_all, required_connections):
+    """
+    Calculates the required dependency depth for every node in network
+    :return: Node dependency dictionary e.g: {0: [[0]], 1: [[1]], 2: [[2], [0, 1]], 3: [[3], [0, 1, 2]]}
+    """
+    required = {}
+    for n_id in node_ids_all:
+        depth_list = [[n_id]]
         while True:
             essential = set(
-                source_id for (_, source_id, target_id) in connections if target_id in e[-1] and source_id not in e[-1])
+                source_id for (_, source_id, target_id) in required_connections if
+                target_id in depth_list[-1] and source_id not in depth_list[-1])
             if not essential:
                 break
-            e.append(list(essential))
-        essentials[node_key] = e
-    return essentials
+            depth_list.append(list(essential))
+        required[n_id] = depth_list
+    return required
 
 
-def activation_recursion(essentials_dict, key, activation_path):
-    value_list = essentials_dict[key]
-    if len(value_list) == 1:
-        if value_list[0][0] not in activation_path:
-            activation_path.append(value_list[0][0])
+def calc_neural_path(depth, n_id, path):
+    """
+    The function calculates exact order of neuron activations for specified n_id (output id)
+    :return: Ordered activation list e.g: [0, 1, 2, 3]
+    """
+    depth_list = depth[n_id]
+
+    if len(depth_list) == 1:
+        # We have reached the end of dependency chain
+        if depth_list[0][0] not in path:
+            path.append(depth_list[0][0])
     else:
-        for value_set in reversed(value_list):
-            for value_key in value_set:
-                if key == value_key:
-                    if value_key not in activation_path:
-                        activation_path.append(value_key)
+        for depth_set in reversed(depth_list):
+            for depth_id in depth_set:
+                if n_id == depth_id:
+                    if depth_id not in path:
+                        path.append(depth_id)
                     break
-                activation_recursion(essentials_dict, value_key, activation_path)
+                calc_neural_path(depth, depth_id, path)

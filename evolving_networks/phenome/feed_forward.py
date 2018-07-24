@@ -1,4 +1,4 @@
-from evolving_networks.phenome.helpers import build_essential_nodes, activation_recursion
+from evolving_networks.phenome.helpers import calc_required_depth, calc_neural_path
 from evolving_networks.phenome.phenome import Phenome
 from evolving_networks.phenome.proteins.node import Node
 
@@ -9,62 +9,88 @@ class FeedForwardNetwork(Phenome):
         self.genome = genome
         self.config = config
 
-        self.activation_paths = {}
-        self.e_nodes = {}  # essential nodes
-        self.nodes = {'input': dict(), 'hidden': dict(), 'output': dict()}
+        # Node to type mappings
+        self.node_to_type = {}
 
-    def initialize(self, act_func_set, agg_func_set):
-        activation_node_set = set()
-        enabled_connections = [(conn.id, conn.source_id, conn.target_id) for conn in self.genome.connections.values() if
-                               conn.enabled]
-        essential_nodes = build_essential_nodes(self.genome.node_ids['all'], enabled_connections)
-        for o_key in self.genome.node_ids['output']:
-            activation_path = []
-            activation_recursion(essential_nodes, o_key, activation_path)
-            activation_node_set.update(activation_path)
-            self.activation_paths[o_key] = activation_path
+        # Neural activation pathways of output nodes
+        self.neuronal_paths = {}
 
-        for node_id, node in self.genome.nodes.items():
-            self.nodes[node.type][node_id] = Node(node_id, node.type, node.bias, node.response,
-                                                  act_func_set.get(node.activation), agg_func_set.get(node.aggregation))
-            if node_id in activation_node_set:
-                incoming_inputs = []
-                for (c_id, s_id, t_id) in enabled_connections:
-                    if t_id == node_id:
-                        incoming_inputs.append((s_id, self.genome.connections[c_id].weight))
-                self.nodes[node.type][node_id].incoming_inputs = incoming_inputs
-                self.e_nodes[node_id] = node.type
+        # Node protein collections
+        self.nodes = {'input': {}, 'hidden': {}, 'output': {}}
+
+    def initialize(self, activations, aggregations):
+        # Set of nodes mandatory for output activation
+        required_nodes = set()
+
+        # The complete list of required (enabled) connections as (id, source_id, target_id)
+        required_connections = [(connection.id, connection.source_id, connection.target_id) for connection in
+                                self.genome.connections.values() if connection.enabled]
+
+        depth = calc_required_depth(self.genome.node_ids['all'], required_connections)
+        for n_id in self.genome.node_ids['output']:
+            path = []
+            calc_neural_path(depth, n_id, path)
+            required_nodes.update(path)
+            self.neuronal_paths[n_id] = path
+
+        # Create required node proteins
+        for n_id in required_nodes:
+            # Node gene
+            g_node = self.genome.nodes[n_id]
+            activation = activations.get(g_node.activation)
+            aggregation = aggregations.get(g_node.aggregation)
+
+            # Node protein
+            p_node = Node(n_id, g_node.type, g_node.bias, g_node.response, activation, aggregation)
+
+            # A list of incoming weighted signals
+            incoming = []
+
+            for (c_id, source_id, target_id) in required_connections:
+
+                # If target is required node then we have incoming connection dependency
+                if target_id == n_id:
+                    incoming.append((source_id, self.genome.connections[c_id].weight))
+
+            p_node.incoming = incoming
+            self.nodes[p_node.type][n_id] = p_node
+            self.node_to_type[n_id] = p_node.type
 
     def activate(self, inputs):
         if len(self.genome.node_ids['input']) != len(inputs):
-            raise RuntimeError(
-                "UNEXPECTED NUMBER OF INPUTS [{}] vs [{}]".format(len(inputs), len(self.genome.node_ids['input'])))
+            raise RuntimeError("Unexpected number of inputs")
 
-        # Assign incoming to input nodes
-        for node, ip in zip(self.nodes['input'].values(), inputs):
-            node.incoming_inputs = [ip]
+        # Assigning incoming to input node proteins
+        for p_node, input_val in zip(self.nodes['input'].values(), inputs):
+            # Special case incoming format for input nodes
+            p_node.incoming = [input_val]
 
-        # Reset essential activation nodes
-        for node_id, node_type in self.e_nodes.items():
-            self.nodes[node_type][node_id].output = 0.0
-            self.nodes[node_type][node_id].is_activated = False
-            self.nodes[node_type][node_id].is_fired = False
+        # Feed forward reset
+        self.reset()
 
-        # Activate nodes based on activation paths
-        for activation_path in self.activation_paths.values():
-            for key in activation_path:
-                node = self.nodes[self.e_nodes[key]][key]
-                if node.is_activated is False:
-                    if node.type == 'input':
-                        node.activate(node.incoming_inputs)
+        # Activating ordered neural pathways
+        for path in self.neuronal_paths.values():
+            for n_id in path:
+                # Get node protein
+                p_node = self.nodes[self.node_to_type[n_id]][n_id]
+
+                # Only do if node isn't activated already
+                if p_node.activated is False:
+
+                    # Special case activation for input nodes
+                    if p_node.type == 'input':
+                        p_node.activate(p_node.incoming)
                     else:
-                        node.activate(
-                            [self.nodes[self.e_nodes[incoming]][incoming].output * weight for (incoming, weight) in
-                             node.incoming_inputs])
-        return [node.output for node in self.nodes['output'].values()]
+                        # Creating weighted incoming signals
+                        incoming = [self.nodes[self.node_to_type[n_id]][n_id].outgoing * weight for (n_id, weight) in
+                                    p_node.incoming]
+                        p_node.activate(incoming)
+
+        return [p_node.outgoing for p_node in self.nodes['output'].values()]
 
     def reset(self):
-        # Hard reset
         for node_dict in self.nodes.values():
-            for node in node_dict.values():
-                node.output, node.is_activated, node.is_fired = 0.0, False, False
+            for p_node in node_dict.values():
+                p_node.outgoing = 0.0
+                p_node.fired = False
+                p_node.activated = False

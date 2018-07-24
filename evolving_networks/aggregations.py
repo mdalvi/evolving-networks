@@ -33,7 +33,7 @@ def mean_aggregation(x):
     return mean(x)
 
 
-class AggregationFunctionSet(object):
+class Aggregations(object):
     def __init__(self):
         self.functions = {}
         self._add('product', product_aggregation)
