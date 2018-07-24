@@ -15,7 +15,6 @@ class KMeans(Factory):
         self.species = {}
         self._genome_to_species = {}
         self.best_genome = None
-        self.best_adjusted_fitness = float('-Infinity')
         self.best_specie_idx = None
         self.min_specie_size = float('+Infinity')
         self.max_specie_size = float('-Infinity')
@@ -47,7 +46,6 @@ class KMeans(Factory):
                 best_specie_idx = s_id
 
         self.best_genome = best_genome
-        self.best_adjusted_fitness = best_adjusted_fitness
         self.best_specie_idx = best_specie_idx
 
     def _purge_stagnant_species(self, generation, config):

@@ -32,16 +32,20 @@ class Population(object):
             fitness_function(list(self.population.items()), config)
 
             best = None
-            for genome in self.population.values():
-                if best is None or genome.fitness > best.fitness:
-                    best = genome
+            population_fitness = []
+            for member in self.population.values():
+                population_fitness.append(member.fitness)
+                if best is None or member.fitness > best.fitness:
+                    best = member
+
+            if self.best_genome is None or best.fitness > self.best_genome.fitness:
+                self.best_genome = best
 
             if not config.neat.no_fitness_termination:
-                fv = self.fitness_criterion(genome.fitness for genome in self.population.values())
+                fv = self.fitness_criterion(population_fitness)
                 if fv >= config.neat.fitness_threshold:
                     break
 
-            population_fitness = [member.fitness for member in self.population.values()]
             min_fitness, max_fitness = min(population_fitness), max(population_fitness)
             if min_fitness == max_fitness:
                 for member in self.population.values():
@@ -59,5 +63,4 @@ class Population(object):
             print(self.generation, len(self.speciation.species))
             self.speciation.speciate(self.population, self.generation, config)
             self.generation += 1
-        # TODO: Return appropriate best
-        print(self.speciation.best_genome)
+        print(self.best_genome)
