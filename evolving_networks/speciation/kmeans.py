@@ -1,10 +1,11 @@
+import random
+
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans as k_means
+from sklearn.cluster import KMeans as K_Means
 
 from evolving_networks.math_util import mean, probabilistic_round
 from evolving_networks.speciation.factory import Factory
-from evolving_networks.speciation.helpers import genomic_distance
 from evolving_networks.speciation.species import Species
 
 
@@ -162,21 +163,22 @@ class KMeans(Factory):
             specie.survivors = max(1, probabilistic_round(len(specie.members) * config.species.survivor_rate))
 
     def speciate(self, population, generation, config):
-        distance_cache = {}
-        distance_matrix = {g_id: [] for g_id in population.keys()}
-        for g_id_1, member_1 in population.items():
-            for g_id_2, member_2 in population.items():
-                if (g_id_1, g_id_2) in distance_cache:
-                    distance_matrix[g_id_2].append(distance_cache[(g_id_1, g_id_2)])
-                else:
-                    d = genomic_distance(member_1, member_2, config)
-                    distance_cache[(g_id_1, g_id_2)] = d
-                    distance_cache[(g_id_2, g_id_1)] = d
-                    distance_matrix[g_id_2].append(d)
-        df = pd.DataFrame(distance_matrix)
-        clusters = k_means(n_clusters=config.reproduction.k_means_species_size, random_state=0).fit_predict(df.values)
 
-        members = {s_id: [] for s_id in range(config.reproduction.k_means_species_size)}
+        random_genome = random.choice(list(population.values()))
+        distance_matrix = {i: [] for i in random_genome.innovation_archive.values()}
+
+        if len(distance_matrix) == 0:
+            clusters = [0] * len(population)
+        else:
+            for member in population.values():
+                for row in distance_matrix.values():
+                    row.append(0)
+                for connection in member.connections.values():
+                    distance_matrix[connection.id][-1] = 1
+            df = pd.DataFrame(distance_matrix)
+            clusters = K_Means(n_clusters=config.species.k_means_species_cnt, random_state=0).fit_predict(df.values)
+
+        members = {s_id: [] for s_id in range(config.species.specie_clusters)}
         for g_id, s_id in zip(population.keys(), clusters):
             members[s_id].append(g_id)
 

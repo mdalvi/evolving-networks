@@ -59,21 +59,12 @@ class Node(Gene):
             raise InvalidConfigurationError()
 
         self.aggregation = config.aggregation_default
-        self.activation = config.activation_default_output if self.type == 'output' else config.activation_default
-
-    def distance(self, other_node, config):
-        bmin = getattr(config, 'bias_min_value')
-        bmax = getattr(config, 'bias_max_value')
-        rmin = getattr(config, 'response_min_value')
-        rmax = getattr(config, 'response_max_value')
-        bdiff_min, bdiff_max = 0.0, abs(bmin - bmax)
-        rdiff_min, rdiff_max = 0.0, abs(rmin - rmax)
-        biff = normalize(bdiff_min, bdiff_max, abs(self.bias - other_node.bias), 0.0, 1.0)
-        rdiff = normalize(rdiff_min, rdiff_max, abs(self.response - other_node.response), 0.0, 1.0)
-        actdiff = 0.0 if self.activation == other_node.activation else 1.0
-        aggdiff = 0.0 if self.aggregation == other_node.aggregation else 1.0
-        return normalize(0.0, 4.0, biff + rdiff + actdiff + aggdiff, 0.0,
-                         1.0) * config.compatibility_weight_contribution
+        if self.type == 'input':
+            self.activation = 'identity'
+        elif self.type == 'output':
+            self.activation = config.activation_default_output
+        else:
+            self.activation = config.activation_default
 
     def crossover(self, other_node):
         assert self.id == other_node.id  # [1][106,109]
@@ -147,7 +138,7 @@ class Node(Gene):
                     success = True
                 elif mut_idx == 4:
                     nb_activations = len(act_opt)
-                    if self.type != 'output' and nb_activations > 1:
+                    if self.type != 'input' and self.type != 'output' and nb_activations > 1:
                         choices = list(range(nb_activations))
                         choices.remove(act_opt.index(self.activation))
                         choice_idx = random.choice(choices)
@@ -193,7 +184,7 @@ class Node(Gene):
 
             if random.random() < act_mr:
                 nb_activations = len(act_opt)
-                if nb_activations > 1:
+                if self.type != 'input' and self.type != 'output' and nb_activations > 1:
                     choices = list(range(nb_activations))
                     choices.remove(act_opt.index(self.activation))
                     choice_idx = random.choice(choices)

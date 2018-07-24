@@ -20,8 +20,8 @@ from evolving_networks.math_util import normalize, probabilistic_round
 
 
 class Genome(object):
+    innovation_archive = {}
     _innovation_indexer = count(0)
-    _innovation_archive = {}
 
     def __init__(self, g_id, generation, config):
         self.node_indexer = count(0)
@@ -73,49 +73,11 @@ class Genome(object):
             s += "\n\t{0!s}".format(connection)
         return s
 
-    def _distance(self, other_genome, config):
-        node_distance, connection_distance = 0.0, 0.0
-        if self.nodes or other_genome.nodes:
-            nb_max_nodes = max(len(self.nodes), len(other_genome.nodes))
-            matching_nodes = list(set(self.nodes.keys()) & set(other_genome.nodes.keys()))
-            disjoint_excess_nodes = list(set(self.nodes.keys()) ^ set(other_genome.nodes.keys()))
-
-            for n_id in matching_nodes:
-                node_distance += self.nodes[n_id].distance(other_genome.nodes[n_id], config.node)
-
-            if len(matching_nodes) > 0:
-                node_distance = node_distance / len(matching_nodes)
-
-            node_distance += normalize(0.0, nb_max_nodes, len(disjoint_excess_nodes), 0.0,
-                                       1.0) * config.node.compatibility_disjoint_contribution
-            node_distance = node_distance / 2.0
-            assert 0.0 <= node_distance <= 1.0
-
-        if self.connections or other_genome.connections:
-            nb_max_connections = len(self.connections) + len(other_genome.connections)
-            matching_connections = list(set(self.connections.keys()) & set(other_genome.connections.keys()))
-            disjoint_excess_connections = list(set(self.connections.keys()) ^ set(other_genome.connections.keys()))
-
-            for c_id in matching_connections:
-                connection_distance += self.connections[c_id].distance(other_genome.connections[c_id],
-                                                                       config.connection)
-            if len(matching_connections) > 0:
-                connection_distance = connection_distance / len(matching_connections)
-
-            connection_distance += normalize(0.0, nb_max_connections, len(disjoint_excess_connections), 0.0,
-                                             1.0) * config.connection.compatibility_disjoint_contribution
-            connection_distance = connection_distance / 2.0
-            assert 0.0 <= connection_distance <= 1.0
-
-        genomic_distance = (node_distance + connection_distance) / 2.0
-        assert 0.0 <= genomic_distance <= 1.0
-        return genomic_distance
-
     def distance(self, other_genome, config):
         dist = 0.0
-        c1 = 1.0
-        c2 = 1.0
-        c3 = 0.4
+        c1 = config.genome.compatibility_disjoint_contribution
+        c2 = config.genome.compatibility_excess_contribution
+        c3 = config.genome.compatibility_weight_contribution
 
         conn_1_cnt = len(self.connections)
         conn_2_cnt = len(other_genome.connections)
@@ -155,8 +117,8 @@ class Genome(object):
                 c_dist = c_dist / len(matched_connections)
 
         dist += (c3 * c_dist)
-        # dist = (dist / 3.0)
-        # assert 0.0 <= dist <= 1.0
+        dist = (dist / 3.0)
+        assert 0.0 <= dist <= 1.0
         return dist
 
     def mutate(self, config):
@@ -230,8 +192,9 @@ class Genome(object):
         connection.enabled = False
         source_id = connection.source_id
         target_id = connection.target_id
+        weight = connection.weight
         self._create_connection(source_id, n_id, 1.0, True)  # [2] pg.108
-        self._create_connection(n_id, target_id, connection.weight, True)  # [2] pg.108
+        self._create_connection(n_id, target_id, weight, True)  # [2] pg.108
         return True
 
     def mutate_delete_node(self):
@@ -614,11 +577,11 @@ class Genome(object):
         self.nodes[n_id] = node
 
     def _create_connection(self, source_id, target_id, weight=None, enabled=None, config=None):
-        if (source_id, target_id) in self.__class__._innovation_archive:
-            c_id = self.__class__._innovation_archive[(source_id, target_id)]
+        if (source_id, target_id) in self.__class__.innovation_archive:
+            c_id = self.__class__.innovation_archive[(source_id, target_id)]
         else:
             c_id = next(self.__class__._innovation_indexer)
-            self.__class__._innovation_archive[(source_id, target_id)] = c_id
+            self.__class__.innovation_archive[(source_id, target_id)] = c_id
 
         assert c_id not in self.connections
         connection = Connection(c_id, source_id, target_id, weight, enabled)

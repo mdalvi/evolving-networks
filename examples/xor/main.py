@@ -6,6 +6,7 @@ from evolving_networks.population import Population
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 from evolving_networks.speciation.kmeans import KMeans as KMeansSpeciation
+from evolving_networks.speciation.agglomerative import Agglomerative as AgglomerativeSpeciation
 
 # 2-input XOR inputs and expected outputs.
 xor_inputs = [(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (1.0, 1.0)]
@@ -13,9 +14,9 @@ xor_outputs = [(0.0,), (1.0,), (1.0,), (0.0,)]
 
 
 def main():
-    config = Config(filename='config/config_1.ini')
+    config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
-    speciation_factory = TraditionalSpeciation()
+    speciation_factory = AgglomerativeSpeciation()
     population = Population(reproduction=reproduction_factory, speciation=speciation_factory)
     population.initialize(config)
     population.fit(evaluate, config)

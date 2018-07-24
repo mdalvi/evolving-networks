@@ -68,7 +68,7 @@ class Config(object):
 
 
 class DefaultReproductionConfig(object):
-    __params = [ConfigParameter('species_elitism', int), ConfigParameter('k_means_species_size', int)]
+    __params = [ConfigParameter('species_elitism', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
@@ -79,7 +79,8 @@ class DefaultSpeciesConfig(object):
     __params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
                 ConfigParameter('max_stagnation', int), ConfigParameter('elitism', float),
                 ConfigParameter('min_species_size', int), ConfigParameter('off_spring_asexual', float),
-                ConfigParameter('survivor_rate', float), ConfigParameter('inter_species_mating_rate', float)]
+                ConfigParameter('survivor_rate', float), ConfigParameter('inter_species_mating_rate', float),
+                ConfigParameter('specie_clusters', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
@@ -92,7 +93,10 @@ class DefaultGenomeConfig(object):
                 ConfigParameter('partial_connection_rate', float), ConfigParameter('feed_forward', bool),
                 ConfigParameter('node_add_rate', float), ConfigParameter('node_delete_rate', float),
                 ConfigParameter('conn_add_rate', float), ConfigParameter('conn_delete_rate', float),
-                ConfigParameter('single_structural_mutation', bool)]
+                ConfigParameter('single_structural_mutation', bool),
+                ConfigParameter('compatibility_disjoint_contribution', float),
+                ConfigParameter('compatibility_excess_contribution', float),
+                ConfigParameter('compatibility_weight_contribution', float)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
@@ -105,9 +109,7 @@ class DefaultConnectionConfig(object):
                 ConfigParameter('enabled_mutate_rate', float), ConfigParameter('weight_init_mean', float),
                 ConfigParameter('weight_init_stdev', float), ConfigParameter('weight_init_type', str),
                 ConfigParameter('weight_min_value', float), ConfigParameter('weight_max_value', float),
-                ConfigParameter('single_structural_mutation', bool),
-                ConfigParameter('compatibility_weight_contribution', float),
-                ConfigParameter('compatibility_disjoint_contribution', float)]
+                ConfigParameter('single_structural_mutation', bool)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
@@ -126,9 +128,7 @@ class DefaultNodeConfig(object):
                 ConfigParameter('activation_default', str), ConfigParameter('activation_default_output', str),
                 ConfigParameter('activation_mutate_rate', float), ConfigParameter('activation_options', list),
                 ConfigParameter('aggregation_default', str), ConfigParameter('aggregation_mutate_rate', float),
-                ConfigParameter('aggregation_options', list), ConfigParameter('single_structural_mutation', bool),
-                ConfigParameter('compatibility_weight_contribution', float),
-                ConfigParameter('compatibility_disjoint_contribution', float)]
+                ConfigParameter('aggregation_options', list), ConfigParameter('single_structural_mutation', bool)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:

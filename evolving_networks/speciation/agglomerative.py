@@ -1,14 +1,17 @@
+import random
+
 import numpy as np
+import pandas as pd
+from sklearn.cluster import AgglomerativeClustering
 
 from evolving_networks.math_util import mean, probabilistic_round
 from evolving_networks.speciation.factory import Factory
-from evolving_networks.speciation.helpers import genomic_distance
 from evolving_networks.speciation.species import Species
-import random
 
-class Traditional(Factory):
+
+class Agglomerative(Factory):
     def __init__(self):
-        super(Traditional, self).__init__()
+        super(Agglomerative, self).__init__()
         self.species = {}
         self._genome_to_species = {}
         self.best_genome = None
@@ -66,7 +69,7 @@ class Traditional(Factory):
         species_data.sort(key=lambda x: x[2])
 
         nb_remaining = len(species_data)
-        for (s_id, specie, _) in species_data:
+        for idx, (s_id, specie, _) in enumerate(species_data):
             if s_id == self.best_specie_idx:
                 continue
 
@@ -74,6 +77,9 @@ class Traditional(Factory):
             stagnant_time = generation - specie.last_improved
             if nb_remaining > config.reproduction.species_elitism:
                 is_stagnant = stagnant_time >= config.species.max_stagnation
+
+            if (len(species_data) - idx) <= config.reproduction.species_elitism:
+                is_stagnant = False
 
             if is_stagnant:
                 del self.species[s_id]
@@ -158,54 +164,26 @@ class Traditional(Factory):
 
     def speciate(self, population, generation, config):
 
-        representatives, members = {}, {}
+        random_genome = random.choice(list(population.values()))
+        distance_matrix = {i: [] for i in random_genome.innovation_archive.values()}
 
-        # Speciate entire population
-        unspeciated = set(population.keys())
-        compatibility_threshold = config.species.compatibility_threshold
+        if len(distance_matrix) == 0:
+            clusters = [0] * len(population)
+        else:
+            for member in population.values():
+                for row in distance_matrix.values():
+                    row.append(0)
+                for connection in member.connections.values():
+                    distance_matrix[connection.id][-1] = 1
+            df = pd.DataFrame(distance_matrix)
+            clusters = AgglomerativeClustering(n_clusters=config.species.specie_clusters).fit_predict(df.values)
 
-        # Uniform chance of electing fresh new representative
-        species_election = [s_id for s_id in self.species.keys()]
-
-        while len(species_election) > 0:
-            s_id = random.choice(species_election)
-            specie = self.species[s_id]
-
-            specie_distances = []
-            for genome_id in unspeciated:
-                genome = population[genome_id]
-                d = genomic_distance(specie.representative, genome, config)
-                specie_distances.append((d, genome))
-
-            _, new_representative = min(specie_distances, key=lambda x: x[0])
-            new_representative_id = new_representative.id
-            representatives[s_id] = new_representative_id
-            members[s_id] = [new_representative_id]
-            unspeciated.remove(new_representative_id)
-
-            species_election.remove(s_id)
-
-        while unspeciated:
-            genome_id = unspeciated.pop()
-            genome = population[genome_id]
-
-            specie_distances = []
-            for s_id, representative_id in representatives.items():
-                representative = population[representative_id]
-                d = genomic_distance(representative, genome, config)
-                if d < compatibility_threshold:
-                    specie_distances.append((d, s_id))
-
-            if specie_distances:
-                _, s_id = min(specie_distances, key=lambda x: x[0])
-                members[s_id].append(genome_id)
-            else:
-                s_id = next(self._specie_indexer)
-                representatives[s_id] = genome_id
-                members[s_id] = [genome_id]
+        members = {s_id: [] for s_id in range(config.species.specie_clusters)}
+        for g_id, s_id in zip(population.keys(), clusters):
+            members[s_id].append(g_id)
 
         self._genome_to_species = {}
-        for s_id, representative_id in representatives.items():
+        for s_id in set(clusters):
             s = self.species.get(s_id)
             if s is None:
                 s = Species(s_id, generation, config.species)
@@ -215,7 +193,7 @@ class Traditional(Factory):
                 self._genome_to_species[genome_id] = s_id
                 specie_members.append(population[genome_id])
 
-            s.representative = population[representative_id]
+            s.representative = population[members[s_id][0]]
             s.members = specie_members
             self.species[s_id] = s
 

@@ -58,14 +58,6 @@ class Connection(Gene):
         attrib = ['{0}={1}'.format(a, getattr(self, a)) for a in attributes]
         return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
 
-    def _distance(self, other_connection, config):
-        wmin = config.weight_min_value
-        wmax = config.weight_max_value
-        wdiff_min, wdiff_max = 0.0, abs(wmin - wmax)
-        wdiff = normalize(wdiff_min, wdiff_max, abs(self.weight - other_connection.weight), 0.0, 1.0)
-        ediff = 0.0 if self.enabled == other_connection.enabled else 1.0
-        return normalize(0.0, 2.0, wdiff + ediff, 0.0, 1.0) * config.compatibility_weight_contribution
-
     def distance(self, other_connection, config):
         wmin = config.weight_min_value
         wmax = config.weight_max_value
