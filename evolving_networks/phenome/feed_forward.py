@@ -82,7 +82,7 @@ class FeedForwardNetwork(Phenome):
                         p_node.activate(p_node.incoming)
                     else:
                         # Creating weighted incoming signals
-                        incoming = [self.nodes[self.node_to_type[n_id]][n_id].outgoing * weight for (n_id, weight) in
+                        incoming = [self.nodes[self.node_to_type[i_id]][i_id].outgoing * weight for (i_id, weight) in
                                     p_node.incoming]
                         p_node.activate(incoming)
 
