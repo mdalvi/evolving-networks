@@ -32,11 +32,18 @@ class Population(object):
             fitness_function(list(self.population.items()), config)
 
             best = None
+            damaged_members = []
             population_fitness = []
-            for member in self.population.values():
-                population_fitness.append(member.fitness)
-                if best is None or member.fitness > best.fitness:
-                    best = member
+            for g_id, member in self.population.items():
+                if member.is_damaged:
+                    damaged_members.append(g_id)
+                else:
+                    population_fitness.append(member.fitness)
+                    if best is None or member.fitness > best.fitness:
+                        best = member
+
+            for g_id in damaged_members:
+                del self.population[g_id]
 
             if self.best_genome is None or best.fitness > self.best_genome.fitness:
                 self.best_genome = best

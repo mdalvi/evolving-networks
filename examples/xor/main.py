@@ -14,7 +14,7 @@ xor_outputs = [(0.0,), (1.0,), (1.0,), (0.0,)]
 
 
 def main():
-    config = Config(filename='config/config_1.ini')
+    config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
     population = Population(reproduction=reproduction_factory, speciation=speciation_factory)
@@ -29,7 +29,9 @@ def evaluate(genomes, config):
         ff_network.initialize(Activations(), Aggregations())
         for x, y in zip(xor_inputs, xor_outputs):
             output = ff_network.activate(x)
+
             genome.fitness -= (output[0] - y[0]) ** 2
+            genome.is_damaged = ff_network.is_damaged
 
     fit_list = [genome.fitness for _, genome in genomes]
     print(sorted(fit_list, reverse=True))

@@ -18,6 +18,9 @@ class FeedForwardNetwork(Phenome):
         # Node protein collections
         self.nodes = {'input': {}, 'hidden': {}, 'output': {}}
 
+        # Flag for genome removal
+        self.is_damaged = False
+
     def initialize(self, activations, aggregations):
         # Set of nodes mandatory for output activation
         required_nodes = set()
@@ -68,24 +71,28 @@ class FeedForwardNetwork(Phenome):
         # Feed forward reset
         self.reset()
 
-        # Activating ordered neural pathways
-        for path in self.neuronal_paths.values():
-            for n_id in path:
-                # Get node protein
-                p_node = self.nodes[self.node_to_type[n_id]][n_id]
+        try:
+            # Activating ordered neural pathways
+            for path in self.neuronal_paths.values():
+                for n_id in path:
+                    # Get node protein
+                    p_node = self.nodes[self.node_to_type[n_id]][n_id]
 
-                # Only do if node isn't activated already
-                if p_node.activated is False:
+                    # Only do if node isn't activated already
+                    if p_node.activated is False:
 
-                    # Special case activation for input nodes
-                    if p_node.type == 'input':
-                        p_node.activate(p_node.incoming)
-                    else:
-                        # Creating weighted incoming signals
-                        incoming = [self.nodes[self.node_to_type[i_id]][i_id].outgoing * weight for (i_id, weight) in
-                                    p_node.incoming]
-                        p_node.activate(incoming)
-
+                        # Special case activation for input nodes
+                        if p_node.type == 'input':
+                            p_node.activate(p_node.incoming)
+                        else:
+                            # Creating weighted incoming signals
+                            incoming = [self.nodes[self.node_to_type[i_id]][i_id].outgoing * weight for (i_id, weight)
+                                        in
+                                        p_node.incoming]
+                            p_node.activate(incoming)
+        except OverflowError:
+            self.is_damaged = True
+            return [0.0 for _ in self.nodes['output'].values()]
         return [p_node.outgoing for p_node in self.nodes['output'].values()]
 
     def reset(self):

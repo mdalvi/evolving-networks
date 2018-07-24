@@ -35,6 +35,7 @@ class Genome(object):
         self.connections = {}
         self.fitness = 0.0
         self.adjusted_fitness = 0.0
+        self.is_damaged = False
 
         self._connectors = set()
         self._cyclic_connectors = set()
