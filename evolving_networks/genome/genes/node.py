@@ -26,6 +26,11 @@ class Node(Gene):
         self.activation = activation
         self.aggregation = aggregation
 
+    def __str__(self):
+        attributes = ['id', 'type', 'bias', 'response', 'activation', 'aggregation']
+        attrib = ['{0}={1}'.format(a, getattr(self, a)) for a in attributes]
+        return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
+
     def initialize(self, config):
         bim = getattr(config, 'bias_init_mean')
         bis = getattr(config, 'bias_init_stdev')

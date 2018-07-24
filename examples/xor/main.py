@@ -15,7 +15,7 @@ xor_outputs = [(0.0,), (1.0,), (1.0,), (0.0,)]
 def main():
     config = Config(filename='config/config_1.ini')
     reproduction_factory = TraditionalReproduction()
-    speciation_factory = KMeansSpeciation()
+    speciation_factory = TraditionalSpeciation()
     population = Population(reproduction=reproduction_factory, speciation=speciation_factory)
     population.initialize(config)
     population.fit(evaluate, config)

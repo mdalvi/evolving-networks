@@ -61,6 +61,18 @@ class Genome(object):
             return self.birth_generation >= other.birth_generation
         return self.fitness >= other.fitness
 
+    def __str__(self):
+        s = "Id: {0}\nFitness: {1}".format(self.id, self.fitness)
+        s += "\nNodes:"
+        for n_id, node in self.nodes.items():
+            s += "\n\t{0} {1!s}".format(n_id, node)
+        s += "\nConnections:"
+        connections = list(self.connections.values())
+        connections.sort()
+        for connection in connections:
+            s += "\n\t{0!s}".format(connection)
+        return s
+
     def _distance(self, other_genome, config):
         node_distance, connection_distance = 0.0, 0.0
         if self.nodes or other_genome.nodes:

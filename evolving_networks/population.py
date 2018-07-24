@@ -59,4 +59,5 @@ class Population(object):
             print(self.generation, len(self.speciation.species))
             self.speciation.speciate(self.population, self.generation, config)
             self.generation += 1
+        print(self.speciation.best_genome)
 

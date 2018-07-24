@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 
 from evolving_networks.math_util import mean, probabilistic_round
@@ -57,7 +55,7 @@ class Traditional(Factory):
             else:
                 historical_best_fitness = float('-Infinity')
 
-            fitness = specie.adjusted_fitness
+            fitness = specie.fitness
             specie.fitness_history.append(fitness)
             if fitness > historical_best_fitness:
                 specie.last_improved = generation
@@ -86,8 +84,13 @@ class Traditional(Factory):
         mean_fitness_sum = 0.0
 
         for specie in self.species.values():
-            members_fitness = [member.adjusted_fitness for member in specie.members]
+            members_true_fitness, members_fitness = [], []
+            for member in specie.members:
+                members_true_fitness.append(member.fitness)
+                members_fitness.append(member.adjusted_fitness)
+
             specie.members_fitness = members_fitness
+            specie.fitness = specie.fitness_criterion(members_true_fitness)
             specie.adjusted_fitness = specie.fitness_criterion(members_fitness)
             specie.adjusted_fitness_mean = mean(members_fitness)
 

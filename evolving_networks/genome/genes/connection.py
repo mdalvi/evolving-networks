@@ -25,6 +25,18 @@ class Connection(Gene):
         self.weight = weight
         self.enabled = enabled
 
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __le__(self, other):
+        return self.id <= other.id
+
+    def __gt__(self, other):
+        return self.id > other.id
+
+    def __ge__(self, other):
+        return self.id >= other.id
+
     def initialize(self, config):
         wit = config.weight_init_type
         wim = config.weight_init_mean
@@ -40,6 +52,11 @@ class Connection(Gene):
             raise InvalidConfigurationError()
 
         self.enabled = config.enabled_default
+
+    def __str__(self):
+        attributes = ['id', 'source_id', 'target_id', 'weight', 'enabled']
+        attrib = ['{0}={1}'.format(a, getattr(self, a)) for a in attributes]
+        return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
 
     def _distance(self, other_connection, config):
         wmin = config.weight_min_value

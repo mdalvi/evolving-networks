@@ -13,6 +13,7 @@ class Species(object):
         self.fitness_history = []
 
         self.members_fitness = []
+        self.fitness = 0.0
         self.adjusted_fitness = 0.0
         self.adjusted_fitness_mean = 0.0
 
@@ -26,6 +27,7 @@ class Species(object):
 
     def reset_stats(self):
         self.members_fitness = []
+        self.fitness = 0.0
         self.adjusted_fitness = 0.0
         self.adjusted_fitness_mean = 0.0
 
