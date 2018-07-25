@@ -78,9 +78,8 @@ class DefaultReproductionConfig(object):
 class DefaultSpeciesConfig(object):
     __params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
                 ConfigParameter('max_stagnation', int), ConfigParameter('elitism', float),
-                ConfigParameter('min_species_size', int), ConfigParameter('off_spring_asexual', float),
-                ConfigParameter('survivor_rate', float), ConfigParameter('inter_species_mating_rate', float),
-                ConfigParameter('specie_clusters', int)]
+                ConfigParameter('off_spring_asexual', float), ConfigParameter('survivor_rate', float),
+                ConfigParameter('inter_species_mating_rate', float), ConfigParameter('specie_clusters', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:
@@ -137,7 +136,8 @@ class DefaultNodeConfig(object):
 
 class DefaultNEATConfig(object):
     __params = [ConfigParameter('population_size', int), ConfigParameter('fitness_criterion', str),
-                ConfigParameter('no_fitness_termination', bool), ConfigParameter('fitness_threshold', float)]
+                ConfigParameter('no_fitness_termination', bool), ConfigParameter('fitness_threshold', float),
+                ConfigParameter('enable_phased_searching', bool)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:

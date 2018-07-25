@@ -1,59 +1,97 @@
-from evolving_networks.math_util import stat_functions, normalize
+from evolving_networks.math_util import stat_functions, normalize, mean
+
+
+class Statistics(object):
+    def __init__(self):
+        self.max_fitness = []
+        self.mean_fitness = []
+        self.max_complexity = []
+        self.mean_complexity = []
+        self.mean_species_best_fitness = []
 
 
 class Population(object):
     def __init__(self, reproduction, speciation):
         self.reproduction = reproduction
         self.speciation = speciation
+        self.complexity_regulation = None
+
+        self.config = None
         self.generation = 0
         self.population = None
         self.best_genome = None
+        self.population_size = 0
+        self.fitness_function = None
         self.fitness_criterion = None
 
-    def initialize(self, config):
-        self.generation = 0
-        self.best_genome = None
+        self.statistics = Statistics()
 
+    def initialize(self, fitness_function, config):
+        self.config = config
+        self.population_size = config.neat.population_size
+        self.fitness_function = fitness_function
         self.fitness_criterion = stat_functions.get(config.neat.fitness_criterion)
         if self.fitness_criterion is None and not config.neat.no_fitness_termination:
             raise RuntimeError('Unexpected fitness criterion [{}]'.format(config.neat.fitness_criterion))
 
-        self.population = self.reproduction.populate(config.neat.population_size, self.generation, config)
-        self.speciation.speciate(self.population, self.generation, config)
+        self.population = self.reproduction.populate(self.population_size, self.generation, config)
+        fitness_function(list(self.population.items()), config)
 
-    def fit(self, fitness_function, config, n=None):
-        if config.neat.no_fitness_termination and (n is None):
+        damaged_members = []
+        members_fitness = []
+        for g_id, member in self.population.items():
+            if member.is_damaged:
+                damaged_members.append(g_id)
+            else:
+                members_fitness.append(member.fitness)
+
+        for g_id in damaged_members:
+            del self.population[g_id]
+
+        min_fitness, max_fitness = min(members_fitness), max(members_fitness)
+        if min_fitness == max_fitness:
+            for member in self.population.values():
+                member.adjusted_fitness = 0.0
+        else:
+            for member in self.population.values():
+                member.adjusted_fitness = normalize(min_fitness, max_fitness, member.fitness, 0.0, 1.0)
+
+        self.speciation.speciate(self.population, self.generation, config)
+        self.speciation.reset_specie_stats()
+        self.speciation.sort_specie_genomes()
+        self.speciation.calc_best_stats()
+        self.generation += 1
+
+    def fit(self, n=None):
+        if self.config.neat.no_fitness_termination and (n is None):
             raise RuntimeError('Cannot have no generational limit with no fitness termination')
 
         k = 0
         while n is None or k < n:
             k += 1
 
-            fitness_function(list(self.population.items()), config)
+            self.speciation.calc_specie_stats(self.generation, self.config)
+            self.population = self.reproduction.reproduce(self.speciation.species, self.population_size,
+                                                          self.generation, self.config)
+            self.fitness_function(list(self.population.items()), self.config)
 
             best = None
             damaged_members = []
-            population_fitness = []
+            members_fitness = []
+            members_complexity = []
             for g_id, member in self.population.items():
                 if member.is_damaged:
                     damaged_members.append(g_id)
                 else:
-                    population_fitness.append(member.fitness)
+                    members_fitness.append(member.fitness)
+                    members_complexity.append(member.complexity)
                     if best is None or member.fitness > best.fitness:
                         best = member
 
             for g_id in damaged_members:
                 del self.population[g_id]
 
-            if self.best_genome is None or best.fitness > self.best_genome.fitness:
-                self.best_genome = best
-
-            if not config.neat.no_fitness_termination:
-                fv = self.fitness_criterion(population_fitness)
-                if fv >= config.neat.fitness_threshold:
-                    break
-
-            min_fitness, max_fitness = min(population_fitness), max(population_fitness)
+            min_fitness, max_fitness = min(members_fitness), max(members_fitness)
             if min_fitness == max_fitness:
                 for member in self.population.values():
                     member.adjusted_fitness = 0.0
@@ -61,13 +99,27 @@ class Population(object):
                 for member in self.population.values():
                     member.adjusted_fitness = normalize(min_fitness, max_fitness, member.fitness, 0.0, 1.0)
 
+            if self.best_genome is None or best.fitness > self.best_genome.fitness:
+                self.best_genome = best
+
+            self.speciation.speciate(self.population, self.generation, self.config)
             self.speciation.reset_specie_stats()
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
-            self.speciation.calc_specie_stats(self.generation, config)
-            self.population = self.reproduction.reproduce(self.speciation.species, config.neat.population_size,
-                                                          self.generation, config)
+
+            self.statistics.max_fitness.append(max(members_fitness))
+            self.statistics.mean_fitness.append(mean(members_fitness))
+            self.statistics.max_complexity.append(max(members_complexity))
+            self.statistics.mean_complexity.append(mean(members_complexity))
+            species_best_fitness = []
+            for specie in self.speciation.species.values():
+                species_best_fitness.append(specie.members[0].fitness)
+            self.statistics.mean_species_best_fitness.append(mean(species_best_fitness))
+
+            if not self.config.neat.no_fitness_termination:
+                fv = self.fitness_criterion(members_fitness)
+                if fv >= self.config.neat.fitness_threshold:
+                    break
             print(self.generation, len(self.speciation.species))
-            self.speciation.speciate(self.population, self.generation, config)
             self.generation += 1
-        print(self.best_genome)
+        return self.statistics

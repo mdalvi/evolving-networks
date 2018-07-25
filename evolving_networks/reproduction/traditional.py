@@ -131,5 +131,4 @@ class Traditional(Factory):
             new_population[off_spring.id] = off_spring
 
         assert len(new_population) == population_size
-
         return new_population

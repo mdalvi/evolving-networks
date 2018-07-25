@@ -4,7 +4,7 @@ setup(
     name='evolving_networks',
     version='0.01',
     packages=['notebooks', 'evolving_networks', 'evolving_networks/genome', 'evolving_networks/genome/genes',
-              'evolving_networks/speciation',
+              'evolving_networks/speciation', 'evolving_networks/complexity_regulation',
               'evolving_networks/reproduction', 'evolving_networks/phenome',
               'evolving_networks/phenome/proteins', 'evolving_networks/activations'],
     install_requires=[

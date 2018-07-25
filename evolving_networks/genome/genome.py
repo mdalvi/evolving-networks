@@ -42,6 +42,10 @@ class Genome(object):
         self._acyclic_connectors = set()
         self.node_ids = {'all': set(), 'input': set(), 'hidden': set(), 'output': set()}
 
+    @property
+    def complexity(self):
+        return len(self.connections)
+
     def __lt__(self, other):
         if self.fitness == other.fitness:
             return self.birth_generation < other.birth_generation

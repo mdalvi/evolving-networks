@@ -36,13 +36,13 @@ class Agglomerative(Factory):
     def calc_best_stats(self):
 
         best_genome = None
-        best_adjusted_fitness = float('-Infinity')
+        best_fitness = float('-Infinity')
         best_specie_idx = None
 
         for s_id, specie in self.species.items():
-            if specie.members[0].adjusted_fitness > best_adjusted_fitness:
+            if specie.members[0].fitness > best_fitness:
                 best_genome = specie.members[0]
-                best_adjusted_fitness = specie.members[0].adjusted_fitness
+                best_fitness = specie.members[0].fitness
                 best_specie_idx = s_id
 
         self.best_genome = best_genome
@@ -155,7 +155,7 @@ class Agglomerative(Factory):
                 specie.elites = 1
 
             specie.off_springs = specie.target_size - specie.elites
-            specie.off_spring_asexual = probabilistic_round(specie.off_springs * config.species.off_spring_asexual)
+            specie.off_spring_asexual = probabilistic_round(specie.off_springs * config.species.off_spring_asexual_rate)
             specie.off_spring_sexual = specie.off_springs - specie.off_spring_asexual
 
             specie.survivors = max(1, probabilistic_round(len(specie.members) * config.species.survivor_rate))
