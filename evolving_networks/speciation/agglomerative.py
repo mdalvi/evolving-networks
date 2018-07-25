@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 
 from evolving_networks.math_util import mean, probabilistic_round
@@ -164,18 +163,14 @@ class Agglomerative(Factory):
     def speciate(self, population, generation, config):
 
         random_genome = random.choice(list(population.values()))
-        distance_matrix = {i: [] for i in random_genome.innovation_archive.values()}
-
-        if len(distance_matrix) == 0:
-            clusters = [0] * len(population)
-        else:
-            for member in population.values():
-                for row in distance_matrix.values():
-                    row.append(0)
+        if len(random_genome.innovation_archive.values()) > 0:
+            distance_matrix = np.zeros((len(population), max(random_genome.innovation_archive.values()) + 1))
+            for idx, member in enumerate(population.values()):
                 for connection in member.connections.values():
-                    distance_matrix[connection.id][-1] = 1
-            df = pd.DataFrame(distance_matrix)
-            clusters = AgglomerativeClustering(n_clusters=config.species.specie_clusters).fit_predict(df.values)
+                    distance_matrix[idx][connection.id] = 1
+            clusters = AgglomerativeClustering(n_clusters=config.species.specie_clusters).fit_predict(distance_matrix)
+        else:
+            clusters = [0] * len(population)
 
         members = {s_id: [] for s_id in range(config.species.specie_clusters)}
         for g_id, s_id in zip(population.keys(), clusters):
