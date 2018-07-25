@@ -11,10 +11,10 @@ class Statistics(object):
 
 
 class Population(object):
-    def __init__(self, reproduction, speciation):
+    def __init__(self, reproduction, speciation, complexity_regulation):
         self.reproduction = reproduction
         self.speciation = speciation
-        self.complexity_regulation = None
+        self.complexity_regulation = complexity_regulation
 
         self.config = None
         self.generation = 0
@@ -70,9 +70,9 @@ class Population(object):
         while n is None or k < n:
             k += 1
 
-            self.speciation.calc_specie_stats(self.generation, self.config)
-            self.population = self.reproduction.reproduce(self.speciation.species, self.population_size,
-                                                          self.generation, self.config)
+            self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
+            self.population = self.reproduction.reproduce(self.speciation.species, self.complexity_regulation,
+                                                          self.generation, self.population_size, self.config)
             self.fitness_function(list(self.population.items()), self.config)
 
             best = None
@@ -120,6 +120,8 @@ class Population(object):
                 fv = self.fitness_criterion(members_fitness)
                 if fv >= self.config.neat.fitness_threshold:
                     break
+
+            self.complexity_regulation.determine_mode(self.statistics)
             print(self.generation, len(self.speciation.species))
             self.generation += 1
         return self.statistics

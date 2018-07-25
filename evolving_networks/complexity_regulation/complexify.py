@@ -1,9 +1,9 @@
 from evolving_networks.complexity_regulation.factory import Factory
 
 
-class Complexifying(Factory):
+class Complexify(Factory):
     def __init__(self, config):
-        super(Complexifying, self).__init__()
+        super(Complexify, self).__init__()
         self._mode = 'complexifying'
         self.node_add_rate = config.genome.node_add_rate
         self.conn_add_rate = config.genome.conn_add_rate

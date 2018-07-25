@@ -78,7 +78,7 @@ class DefaultReproductionConfig(object):
 class DefaultSpeciesConfig(object):
     __params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
                 ConfigParameter('max_stagnation', int), ConfigParameter('elitism', float),
-                ConfigParameter('off_spring_asexual', float), ConfigParameter('survivor_rate', float),
+                ConfigParameter('off_spring_asexual_rate', float), ConfigParameter('survivor_rate', float),
                 ConfigParameter('inter_species_mating_rate', float), ConfigParameter('specie_clusters', int)]
 
     def __init__(self, config_parser):

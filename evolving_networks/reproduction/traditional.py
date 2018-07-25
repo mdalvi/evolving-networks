@@ -30,7 +30,7 @@ class Traditional(Factory):
             self.ancestors.add(member_id)
         return population
 
-    def _reproduce_off_springs(self, species, generation, config):
+    def _reproduce_off_springs(self, species, complexity_regulation, generation, config):
         off_springs = []
         non_zero_species = 0
         reproduce_probs, species_probs = {}, []
@@ -60,7 +60,7 @@ class Traditional(Factory):
                 assert member_id not in self.ancestors
                 g = Genome(member_id, generation, config.genome)
                 g.crossover_asexual(member_parent_1)
-                g.mutate(config)
+                g.mutate(complexity_regulation, config)
                 off_springs.append(g)
 
             inter_species_matings = 0 if non_zero_species == 1 else probabilistic_round(
@@ -92,7 +92,7 @@ class Traditional(Factory):
                     assert member_id not in self.ancestors
                     g = Genome(member_id, generation, config.genome)
                     g.crossover_asexual(member_parent_1)
-                    g.mutate(config)
+                    g.mutate(complexity_regulation, config)
                     off_springs.append(g)
                 else:
                     m1_idx = np.random.choice(range(specie.survivors), 1, p=reproduce_probs[s_id])[0]
@@ -105,7 +105,7 @@ class Traditional(Factory):
                         assert member_id not in self.ancestors
                         g = Genome(member_id, generation, config.genome)
                         g.crossover_asexual(member_parent_1)
-                        g.mutate(config)
+                        g.mutate(complexity_regulation, config)
                         off_springs.append(g)
                     else:
                         reproduce_probs_revised = reproduce_probs_revised / reproduce_probs_revised_sum
@@ -119,9 +119,9 @@ class Traditional(Factory):
 
         return off_springs
 
-    def reproduce(self, species, population_size, generation, config):
+    def reproduce(self, species, complexity_regulation, generation, population_size, config):
         new_population = {}
-        off_springs = self._reproduce_off_springs(species, generation, config)
+        off_springs = self._reproduce_off_springs(species, complexity_regulation, generation, config)
 
         for specie in species.values():
             for elite in specie.members[:specie.elites]:

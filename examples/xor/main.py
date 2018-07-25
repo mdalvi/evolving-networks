@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 
 from evolving_networks.activations.activations import Activations
 from evolving_networks.aggregations import Aggregations
+from evolving_networks.complexity_regulation.blended import Blended as BlendedComplexityRegulation
+from evolving_networks.complexity_regulation.complexify import Complexify as ComplexifyComplexityRegulation
 from evolving_networks.config import Config
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.population import Population
@@ -17,11 +19,14 @@ def main():
     config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
-    population = Population(reproduction_factory, speciation_factory)
+    complexity_regulation_factory = ComplexifyComplexityRegulation(config)
+    population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
     population.initialize(evaluate, config)
     history = population.fit()
     print(population.best_genome)
+    visualize(population, history)
 
+def visualize(population, history):
     plt.plot(range(population.generation), history.max_fitness, 'r-', label="Max Fitness")
     plt.plot(range(population.generation), history.mean_fitness, 'r:', label="Mean Fitness")
     plt.plot(range(population.generation), history.mean_species_best_fitness, 'b--', label="Mean Species Best")
