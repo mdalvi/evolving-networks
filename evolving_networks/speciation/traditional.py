@@ -191,14 +191,19 @@ class Traditional(Factory):
             genome = population[genome_id]
 
             specie_distances = []
+            all_specie_distances = []
             for s_id, representative_id in representatives.items():
                 representative = population[representative_id]
                 d = genomic_distance(representative, genome, config)
                 if d < compatibility_threshold:
                     specie_distances.append((d, s_id))
+                all_specie_distances.append((d, s_id))
 
             if specie_distances:
                 _, s_id = min(specie_distances, key=lambda x: x[0])
+                members[s_id].append(genome_id)
+            elif len(representatives) >= config.species.specie_clusters:
+                _, s_id = min(all_specie_distances, key=lambda x: x[0])
                 members[s_id].append(genome_id)
             else:
                 s_id = next(self._specie_indexer)
