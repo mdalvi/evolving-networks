@@ -4,6 +4,7 @@
 # ==============
 
 [1] https://gym.openai.com/docs/
+[2] https://gym.openai.com/envs/CartPole-v1/
 
 """
 import concurrent.futures
@@ -53,7 +54,7 @@ def evaluate(attributes):
     ff_network.initialize(Activations(), Aggregations())
 
     fitness = []
-    env = gym.make('CartPole-v1')  # [1]
+    env = gym.make('CartPole-v1')  # [1], [2]
     for e_idx in range(100):
         observation = env.reset()
         episode_reward = 0
