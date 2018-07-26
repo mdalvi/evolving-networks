@@ -122,6 +122,5 @@ class Population(object):
                     break
 
             self.complexity_regulation.determine_mode(self.statistics)
-            print(self.generation, len(self.speciation.species))
             self.generation += 1
         return self.statistics

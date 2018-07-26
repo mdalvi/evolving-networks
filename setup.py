@@ -8,7 +8,7 @@ setup(
               'evolving_networks/reproduction', 'evolving_networks/phenome',
               'evolving_networks/phenome/proteins', 'evolving_networks/activations'],
     install_requires=[
-        'numpy',
+        'numpy', 'gym'
     ],
     url='https://turingequations.com',
     license='GNU GENERAL PUBLIC LICENSE 3',
