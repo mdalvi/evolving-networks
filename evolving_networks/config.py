@@ -136,7 +136,11 @@ class DefaultNodeConfig(object):
 
 class DefaultNEATConfig(object):
     __params = [ConfigParameter('population_size', int), ConfigParameter('fitness_criterion', str),
-                ConfigParameter('no_fitness_termination', bool), ConfigParameter('fitness_threshold', float)]
+                ConfigParameter('no_fitness_termination', bool), ConfigParameter('fitness_threshold', float),
+                ConfigParameter('phased_complexity_type', str),
+                ConfigParameter('phased_complexity_threshold', float),
+                ConfigParameter('phase_min_fitness_plateau', int),
+                ConfigParameter('phase_min_simplification_generations', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:

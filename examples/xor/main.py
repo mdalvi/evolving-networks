@@ -7,7 +7,6 @@ from evolving_networks.config import Config
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.population import Population
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
-from evolving_networks.speciation.agglomerative import Agglomerative as AgglomerativeSpeciation
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
 # 2-input XOR inputs and expected outputs.

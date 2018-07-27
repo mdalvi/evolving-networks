@@ -14,7 +14,7 @@ import gym
 
 from evolving_networks.activations.activations import Activations
 from evolving_networks.aggregations import Aggregations
-from evolving_networks.complexity_regulation.blended import Blended as BlendedComplexityRegulation
+from evolving_networks.complexity_regulation.phased import Phased as PhasedComplexityRegulation
 from evolving_networks.config import Config
 from evolving_networks.math_util import mean
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
@@ -73,7 +73,7 @@ def main():
     config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
-    complexity_regulation_factory = BlendedComplexityRegulation(config)
+    complexity_regulation_factory = PhasedComplexityRegulation(config)
     population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
@@ -93,6 +93,7 @@ def main():
         while True:
             if e_idx % 10 == 0:
                 env.render()
+                time.sleep(0.075)
             action = ff_network.activate(observation.tolist())[0]
             action = 0 if action < 0.5 else 1
             observation, reward, done, info = env.step(action)

@@ -3,11 +3,14 @@ from evolving_networks.math_util import stat_functions, normalize, mean
 
 class Statistics(object):
     def __init__(self):
+        self.generation = 0
         self.max_fitness = []
         self.mean_fitness = []
         self.max_complexity = []
         self.mean_complexity = []
         self.mean_species_best_fitness = []
+        self.mean_complexity_ma = 0.0
+        self.fitness_plateau_size = 0
 
 
 class Population(object):
@@ -101,6 +104,9 @@ class Population(object):
 
             if self.best_genome is None or best.fitness > self.best_genome.fitness:
                 self.best_genome = best
+                self.statistics.fitness_plateau_size = 0
+            else:
+                self.statistics.fitness_plateau_size += 1
 
             self.speciation.speciate(self.population, self.generation, self.config)
             self.speciation.reset_specie_stats()
@@ -110,6 +116,8 @@ class Population(object):
             self.statistics.max_fitness.append(max(members_fitness))
             self.statistics.mean_fitness.append(mean(members_fitness))
             self.statistics.max_complexity.append(max(members_complexity))
+            if len(self.statistics.mean_complexity) != 0:
+                self.statistics.mean_complexity_ma = mean(self.statistics.mean_complexity[-100:])
             self.statistics.mean_complexity.append(mean(members_complexity))
             species_best_fitness = []
             for specie in self.speciation.species.values():
@@ -120,7 +128,7 @@ class Population(object):
                 fv = self.fitness_criterion(members_fitness)
                 if fv >= self.config.neat.fitness_threshold:
                     break
-
+            print(self.complexity_regulation.mode)
             self.complexity_regulation.determine_mode(self.statistics)
             self.generation += 1
         return self.statistics
