@@ -73,6 +73,7 @@ class Population(object):
         while n is None or k < n:
             k += 1
 
+            print(self.complexity_regulation.mode)
             self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
             self.population = self.reproduction.reproduce(self.speciation.species, self.complexity_regulation,
                                                           self.generation, self.population_size, self.config)
@@ -128,7 +129,7 @@ class Population(object):
                 fv = self.fitness_criterion(members_fitness)
                 if fv >= self.config.neat.fitness_threshold:
                     break
-            print(self.complexity_regulation.mode)
+
             self.complexity_regulation.determine_mode(self.statistics)
             self.generation += 1
         return self.statistics
