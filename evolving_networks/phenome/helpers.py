@@ -1,4 +1,4 @@
-def calc_required_depth(node_ids_all, required_connections):
+def calc_required_depth(node_ids_all, enabled_connections):
     """
     Calculates the required dependency depth for every node in network
     :return: Node dependency dictionary e.g: {0: [[0]], 1: [[1]], 2: [[2], [0, 1]], 3: [[3], [0, 1, 2]]}
@@ -8,7 +8,7 @@ def calc_required_depth(node_ids_all, required_connections):
         depth_list = [[n_id]]
         while True:
             essential = set(
-                source_id for (_, source_id, target_id) in required_connections if
+                source_id for (_, source_id, target_id) in enabled_connections if
                 target_id in depth_list[-1] and source_id not in depth_list[-1])
             if not essential:
                 break

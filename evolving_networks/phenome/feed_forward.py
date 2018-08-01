@@ -26,10 +26,10 @@ class FeedForwardNetwork(Phenome):
         required_nodes = set()
 
         # The complete list of required (enabled) connections as (id, source_id, target_id)
-        required_connections = [(connection.id, connection.source_id, connection.target_id) for connection in
-                                self.genome.connections.values() if connection.enabled]
+        enabled_connections = [(connection.id, connection.source_id, connection.target_id) for connection in
+                               self.genome.connections.values() if connection.enabled]
 
-        depth = calc_required_depth(self.genome.node_ids['all'], required_connections)
+        depth = calc_required_depth(self.genome.node_ids['all'], enabled_connections)
         for n_id in self.genome.node_ids['output']:
             path = []
             calc_neural_path(depth, n_id, path)
@@ -49,7 +49,7 @@ class FeedForwardNetwork(Phenome):
             # A list of incoming weighted signals
             incoming = []
 
-            for (c_id, source_id, target_id) in required_connections:
+            for (c_id, source_id, target_id) in enabled_connections:
 
                 # If target is required node then we have incoming connection dependency
                 if target_id == n_id:
