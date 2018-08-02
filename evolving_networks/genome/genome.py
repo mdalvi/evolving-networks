@@ -462,36 +462,46 @@ class Genome(object):
         assert n_id not in self.nodes
         return n_id
 
-    def _compute_probable_connectors(self, n_id=None):
-        if n_id is None:
-            for source_id in self.node_ids['input']:
-                for target_id in self.node_ids['hidden']:
-                    self._cyclic_connectors.add((source_id, target_id))
-                    self._acyclic_connectors.add((source_id, target_id))
-                for target_id in self.node_ids['output']:
-                    self._cyclic_connectors.add((source_id, target_id))
-                    self._acyclic_connectors.add((source_id, target_id))
+    def _compute_probable_connectors(self, inserted_node_id=None):
+        if inserted_node_id is None:
+            for input_id in self.node_ids['input']:
+                for hidden_id in self.node_ids['hidden']:
+                    self._cyclic_connectors.add((input_id, hidden_id))
+                    self._acyclic_connectors.add((input_id, hidden_id))
+                for output_id in self.node_ids['output']:
+                    self._cyclic_connectors.add((input_id, output_id))
+                    self._acyclic_connectors.add((input_id, output_id))
 
-            for source_id in self.node_ids['hidden']:
-                for target_id in self.node_ids['hidden']:
-                    self._cyclic_connectors.add((source_id, target_id))
-                    if source_id != target_id:
-                        self._acyclic_connectors.add((source_id, target_id))
-                for target_id in self.node_ids['output']:
-                    self._cyclic_connectors.add((source_id, target_id))
-                    self._acyclic_connectors.add((source_id, target_id))
+            for hidden_id_1 in self.node_ids['hidden']:
+                for hidden_id_2 in self.node_ids['hidden']:
+                    self._cyclic_connectors.add((hidden_id_1, hidden_id_2))
+                    if hidden_id_1 != hidden_id_2:
+                        self._acyclic_connectors.add((hidden_id_1, hidden_id_2))
+                for output_id in self.node_ids['output']:
+                    self._cyclic_connectors.add((hidden_id_1, output_id))
+                    self._acyclic_connectors.add((hidden_id_1, output_id))
+
+            for output_id in self.node_ids['output']:
+                for hidden_id in self.node_ids['hidden']:
+                    self._cyclic_connectors.add((output_id, hidden_id))
+                self._cyclic_connectors.add((output_id, output_id))
         else:
-            for source_id in self.node_ids['input']:
-                self._cyclic_connectors.add((source_id, n_id))
-                self._acyclic_connectors.add((source_id, n_id))
-            for source_id in self.node_ids['hidden']:
-                for target_id in self.node_ids['hidden']:
-                    self._cyclic_connectors.add((source_id, target_id))
-                    if source_id != target_id:
-                        self._acyclic_connectors.add((source_id, target_id))
-            for target_id in self.node_ids['output']:
-                self._cyclic_connectors.add((n_id, target_id))
-                self._acyclic_connectors.add((n_id, target_id))
+            for input_id in self.node_ids['input']:
+                self._cyclic_connectors.add((input_id, inserted_node_id))
+                self._acyclic_connectors.add((input_id, inserted_node_id))
+
+            for hidden_id in self.node_ids['hidden']:
+                self._cyclic_connectors.add((hidden_id, inserted_node_id))
+                self._cyclic_connectors.add((inserted_node_id, hidden_id))
+
+                if hidden_id != inserted_node_id:
+                    self._acyclic_connectors.add((hidden_id, inserted_node_id))
+                    self._acyclic_connectors.add((inserted_node_id, hidden_id))
+
+            for output_id in self.node_ids['output']:
+                self._cyclic_connectors.add((inserted_node_id, output_id))
+                self._cyclic_connectors.add((output_id, inserted_node_id))
+                self._acyclic_connectors.add((inserted_node_id, output_id))
 
     def initialize(self, node_config, connection_config):
         for _ in range(self.config.num_inputs):
@@ -567,11 +577,9 @@ class Genome(object):
                 for target_id in self.node_ids['output']:
                     connectors.append((source_id, target_id))
 
-        # TODO: Recurrent networks
-        # For recurrent genomes, include node self-connections.
-        # if not self.config.feed_forward:
-        #     for recurrent_id in set().union(self.node_ids['hidden'], self.node_ids['output']):
-        #         connectors.append((recurrent_id, recurrent_id))
+        if not self.config.genome.feed_forward:
+            for recurrent_id in set().union(self.node_ids['hidden'], self.node_ids['output']):
+                connectors.append((recurrent_id, recurrent_id))
 
         return connectors
 
