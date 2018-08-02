@@ -17,7 +17,7 @@ from evolving_networks.aggregations import Aggregations
 from evolving_networks.complexity_regulation.phased import Phased as PhasedComplexityRegulation
 from evolving_networks.config import Config
 from evolving_networks.math_util import mean
-from evolving_networks.phenome.feed_forward import FeedForwardNetwork
+from evolving_networks.phenome.recurrent import RecurrentNetwork
 from evolving_networks.population import Population
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
@@ -50,8 +50,8 @@ class ParallelEvaluator(object):
 
 def evaluate(attributes):
     g_id, genome, config = attributes
-    ff_network = FeedForwardNetwork(genome, config)
-    ff_network.initialize(Activations(), Aggregations())
+    recur_network = RecurrentNetwork(genome, config)
+    recur_network.initialize(Activations(), Aggregations())
 
     fitness = []
     env = gym.make('CartPole-v1')  # [1], [2]
@@ -59,7 +59,7 @@ def evaluate(attributes):
         observation = env.reset()
         episode_reward = 0
         while True:
-            action = ff_network.activate(observation.tolist())[0]
+            action = recur_network.activate(observation.tolist())[0]
             action = 0 if action < 0.5 else 1
             observation, reward, done, info = env.step(action)
             episode_reward += reward
@@ -70,7 +70,7 @@ def evaluate(attributes):
 
 
 def main():
-    config = Config(filename='config/config_2.ini')
+    config = Config(filename='config/config_3.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
     complexity_regulation_factory = PhasedComplexityRegulation(config)
@@ -83,8 +83,8 @@ def main():
 
     # Champion solution
     env = gym.make('CartPole-v1')  # [1]
-    ff_network = FeedForwardNetwork(best_genome, config)
-    ff_network.initialize(Activations(), Aggregations())
+    recur_network = RecurrentNetwork(best_genome, config)
+    recur_network.initialize(Activations(), Aggregations())
 
     fitness = []
     for e_idx in range(100):
@@ -94,7 +94,7 @@ def main():
             if e_idx % 10 == 0:
                 env.render()
                 time.sleep(0.075)
-            action = ff_network.activate(observation.tolist())[0]
+            action = recur_network.activate(observation.tolist())[0]
             action = 0 if action < 0.5 else 1
             observation, reward, done, info = env.step(action)
             episode_reward += reward

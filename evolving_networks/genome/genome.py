@@ -577,7 +577,7 @@ class Genome(object):
                 for target_id in self.node_ids['output']:
                     connectors.append((source_id, target_id))
 
-        if not self.config.genome.feed_forward:
+        if not self.config.feed_forward:
             for recurrent_id in set().union(self.node_ids['hidden'], self.node_ids['output']):
                 connectors.append((recurrent_id, recurrent_id))
 

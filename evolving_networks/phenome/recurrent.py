@@ -69,6 +69,9 @@ class RecurrentNetwork(Phenome):
             # Special case incoming format for input nodes
             p_node.incoming = [input_val]
 
+        # Recurrent reset
+        self.reset()
+
         try:
             # Activating ordered neural pathways
             for path in self.neuronal_paths.values():
@@ -96,6 +99,5 @@ class RecurrentNetwork(Phenome):
     def reset(self):
         for node_dict in self.nodes.values():
             for p_node in node_dict.values():
-                p_node.outgoing = 0.0
                 p_node.fired = False
                 p_node.activated = False
