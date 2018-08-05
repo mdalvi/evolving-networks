@@ -13,3 +13,6 @@ class Complexify(Factory):
 
     def determine_mode(self, statistics):
         pass
+
+    def __str__(self):
+        return "Complexify complexity regulation with mode {0}".format(self.mode)

@@ -4,3 +4,6 @@ class Factory(object):
 
     def determine_mode(self, statistics):
         raise NotImplementedError()
+
+    def __str__(self):
+        raise NotImplementedError()
