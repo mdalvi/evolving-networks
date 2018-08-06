@@ -456,6 +456,21 @@ class Genome(object):
         self.node_indexer = count(parent_1.node_indexer_cntr + 1)
         self.node_indexer_cntr = parent_1.node_indexer_cntr
 
+    def clone(self, original):
+        for node in original.nodes.values():
+            assert node.id not in self.nodes
+            self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
+            self.node_ids['all'].add(node.id)
+            self.node_ids[node.type].add(node.id)
+
+        self._compute_probable_connectors()
+
+        for connection in original.connections.values():
+            self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
+
+        self.node_indexer = count(original.node_indexer_cntr + 1)
+        self.node_indexer_cntr = original.node_indexer_cntr
+
     def _next_node_id(self):
         n_id = next(self.node_indexer)
         self.node_indexer_cntr = n_id

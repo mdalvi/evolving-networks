@@ -139,8 +139,8 @@ class DefaultNEATConfig(object):
                 ConfigParameter('no_fitness_termination', bool), ConfigParameter('fitness_threshold', float),
                 ConfigParameter('phased_complexity_type', str),
                 ConfigParameter('phased_complexity_threshold', float),
-                ConfigParameter('phase_min_fitness_plateau', int),
-                ConfigParameter('phase_min_simplification_generations', int)]
+                ConfigParameter('phase_fitness_plateau_threshold', int),
+                ConfigParameter('phase_simplification_generations_threshold', int)]
 
     def __init__(self, config_parser):
         for parameter in self.__params:

@@ -2,6 +2,16 @@ import math
 import random
 
 
+def variance(values):
+    values = list(values)
+    m = mean(values)
+    return sum((v - m) ** 2 for v in values) / len(values)
+
+
+def stdev(values):
+    return math.sqrt(variance(values))
+
+
 def mean(values):
     values = list(values)
     return sum(values) / len(values)
@@ -21,4 +31,4 @@ def probabilistic_round(value):
     return int(integer_part + 1.0 if random.random() < fractional_part else integer_part)
 
 
-stat_functions = {'min': min, 'max': max, 'mean': mean}
+stat_functions = {'min': min, 'max': max, 'mean': mean, 'stdev': stdev}

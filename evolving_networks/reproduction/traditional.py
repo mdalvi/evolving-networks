@@ -125,7 +125,9 @@ class Traditional(Factory):
 
         for specie in species.values():
             for elite in specie.members[:specie.elites]:
-                new_population[elite.id] = elite
+                g = Genome(elite.id, elite.birth_generation, config.genome)
+                g.clone(elite)
+                new_population[elite.id] = g
 
         for off_spring in off_springs:
             new_population[off_spring.id] = off_spring

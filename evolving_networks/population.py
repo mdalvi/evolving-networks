@@ -1,16 +1,65 @@
-from evolving_networks.math_util import stat_functions, normalize, mean
+import time
+
+from tabulate import tabulate
+
+from evolving_networks.math_util import stat_functions, normalize, mean, stdev
 
 
 class Statistics(object):
     def __init__(self):
         self.generation = 0
+        self.current_best = None
+        self.best_fitness = float('-Infinity')
+
         self.max_fitness = []
         self.mean_fitness = []
+        self.stdev_fitness = []
         self.max_complexity = []
         self.mean_complexity = []
-        self.mean_species_best_fitness = []
-        self.mean_complexity_ma = 0.0
-        self.fitness_plateau_size = 0
+        self.stdev_complexity = []
+        self.mean_species_fitness = []
+        self.stdev_species_fitness = []
+        self.elapsed_generation_time = []
+
+    @property
+    def mean_complexity_ma(self):
+        if len(self.mean_complexity) == 0:
+            return 0.0
+        return mean(self.mean_complexity[-100:])
+
+    def describe_stats(self, speciation, complexity_regulation, member_fitness, members_complexity, elapsed_time,
+                       generation):
+        self.max_fitness.append(max(member_fitness))
+        self.mean_fitness.append(mean(member_fitness))
+        self.max_complexity.append(max(members_complexity))
+        self.mean_complexity.append(mean(members_complexity))
+        self.stdev_fitness.append(stdev(member_fitness))
+        self.stdev_complexity.append(stdev(members_complexity))
+        self.elapsed_generation_time.append(elapsed_time)
+        self.generation = generation
+
+        species_best_fitness = []
+        for specie in speciation.species.values():
+            species_best_fitness.append(specie.members[0].fitness)
+        self.mean_species_fitness.append(mean(species_best_fitness))
+        self.stdev_species_fitness.append(stdev(species_best_fitness))
+
+        if speciation.best_genome.fitness > self.best_fitness:
+            self.best_fitness = speciation.best_genome.fitness
+        self.current_best = speciation.best_genome
+
+        print("\n****** Generation {0} ******\n".format(self.generation))
+        print("Total number of species {0}".format(len(speciation.species)))
+        print("Best fitness {0}".format(self.best_fitness))
+        print("Current best fitness {0} @ complexity {1}\n".format(self.current_best.fitness,
+                                                                   self.current_best.complexity))
+
+        fitness_details = {'Entity': ['Population Fitness', 'Population Complexity', 'Species Fitness (Best)'],
+                           'Mean': [self.mean_fitness[-1], self.mean_complexity[-1], self.mean_species_fitness[-1]],
+                           'Stdev': [self.stdev_fitness[-1], self.stdev_complexity[-1], self.stdev_species_fitness[-1]]}
+        print(tabulate(fitness_details, headers="keys", numalign="right"))
+        print(str(complexity_regulation))
+        print("\nElapsed generation time: {0:.2f} sec ".format(self.elapsed_generation_time[-1]))
 
 
 class Population(object):
@@ -72,8 +121,8 @@ class Population(object):
         k = 0
         while n is None or k < n:
             k += 1
+            t0 = time.time()
 
-            print(self.complexity_regulation.mode)
             self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
             self.population = self.reproduction.reproduce(self.speciation.species, self.complexity_regulation,
                                                           self.generation, self.population_size, self.config)
@@ -95,6 +144,11 @@ class Population(object):
             for g_id in damaged_members:
                 del self.population[g_id]
 
+            if self.best_genome is None or best.fitness > self.best_genome.fitness:
+                if self.best_genome is not None:
+                    print(self.best_genome.fitness, best.fitness)
+                self.best_genome = best
+
             min_fitness, max_fitness = min(members_fitness), max(members_fitness)
             if min_fitness == max_fitness:
                 for member in self.population.values():
@@ -103,27 +157,13 @@ class Population(object):
                 for member in self.population.values():
                     member.adjusted_fitness = normalize(min_fitness, max_fitness, member.fitness, 0.0, 1.0)
 
-            if self.best_genome is None or best.fitness > self.best_genome.fitness:
-                self.best_genome = best
-                self.statistics.fitness_plateau_size = 0
-            else:
-                self.statistics.fitness_plateau_size += 1
-
             self.speciation.speciate(self.population, self.generation, self.config)
             self.speciation.reset_specie_stats()
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
 
-            self.statistics.max_fitness.append(max(members_fitness))
-            self.statistics.mean_fitness.append(mean(members_fitness))
-            self.statistics.max_complexity.append(max(members_complexity))
-            if len(self.statistics.mean_complexity) != 0:
-                self.statistics.mean_complexity_ma = mean(self.statistics.mean_complexity[-100:])
-            self.statistics.mean_complexity.append(mean(members_complexity))
-            species_best_fitness = []
-            for specie in self.speciation.species.values():
-                species_best_fitness.append(specie.members[0].fitness)
-            self.statistics.mean_species_best_fitness.append(mean(species_best_fitness))
+            self.statistics.describe_stats(self.speciation, self.complexity_regulation, members_fitness,
+                                           members_complexity, time.time() - t0, self.generation)
 
             if not self.config.neat.no_fitness_termination:
                 fv = self.fitness_criterion(members_fitness)
