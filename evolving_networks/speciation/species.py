@@ -38,3 +38,6 @@ class Species(object):
         self.off_spring_asexual = 0
         self.off_spring_sexual = 0
         self.survivors = 0
+
+    def __len__(self):
+        return len(self.members)

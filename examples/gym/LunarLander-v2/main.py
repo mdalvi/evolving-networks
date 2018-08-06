@@ -8,13 +8,12 @@
 
 """
 import concurrent.futures
-import time
 
 import gym
 
 from evolving_networks.activations.activations import Activations
 from evolving_networks.aggregations import Aggregations
-from evolving_networks.complexity_regulation.phased import Phased as PhasedComplexityRegulation
+from evolving_networks.complexity_regulation.blended import Blended as BlendedComplexityRegulation
 from evolving_networks.config import Config
 from evolving_networks.math_util import mean
 from evolving_networks.phenome.recurrent import RecurrentNetwork
@@ -50,30 +49,34 @@ def evaluate(attributes):
     recur_network = RecurrentNetwork(genome, config)
     recur_network.initialize(Activations(), Aggregations())
 
+    fitness = []
     env = gym.make('LunarLander-v2')  # [1], [2]
-    observation = env.reset()
-    episode_reward = 0
-    while True:
-        action = recur_network.activate(observation.tolist())
-        action = action.index(max(action))
-        observation, reward, done, info = env.step(action)
-        episode_reward += reward
-        if done:
-            break
-    return episode_reward
+    for e_idx in range(1):
+        episode_reward = 0
+        observation = env.reset()
+        recur_network.reset(hard=True)
+        while True:
+            action = recur_network.activate(observation.tolist())
+            action = action.index(max(action))
+            observation, reward, done, info = env.step(action)
+            episode_reward += reward
+            if done:
+                break
+        fitness.append(episode_reward)
+    return mean(fitness)
 
 
 def main():
     config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
-    complexity_regulation_factory = PhasedComplexityRegulation(config)
+    complexity_regulation_factory = BlendedComplexityRegulation(config)
     population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
 
     while True:
-        population.fit(50)
+        population.fit(10)
         best_genome = population.best_genome
         print(best_genome)
 
@@ -83,8 +86,9 @@ def main():
 
         fitness = []
         for e_idx in range(100):
-            observation = env.reset()
             episode_reward = 0
+            observation = env.reset()
+            recur_network.reset(hard=True)
             while True:
                 if e_idx % 10 == 0:
                     env.render()

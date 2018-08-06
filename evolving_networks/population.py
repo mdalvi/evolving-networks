@@ -39,8 +39,11 @@ class Statistics(object):
         self.generation = generation
 
         species_best_fitness = []
-        for specie in speciation.species.values():
+        species_details = {'Id': [], 'Size': []}
+        for s_id, specie in speciation.species.items():
             species_best_fitness.append(specie.members[0].fitness)
+            species_details['Id'].append(s_id)
+            species_details['Size'].append(len(specie))
         self.mean_species_fitness.append(mean(species_best_fitness))
         self.stdev_species_fitness.append(stdev(species_best_fitness))
 
@@ -58,6 +61,7 @@ class Statistics(object):
                            'Mean': [self.mean_fitness[-1], self.mean_complexity[-1], self.mean_species_fitness[-1]],
                            'Stdev': [self.stdev_fitness[-1], self.stdev_complexity[-1], self.stdev_species_fitness[-1]]}
         print(tabulate(fitness_details, headers="keys", numalign="right"))
+        print(tabulate(species_details, headers="keys", numalign="right"))
         print(str(complexity_regulation))
         print("\nElapsed generation time: {0:.2f} sec ".format(self.elapsed_generation_time[-1]))
 

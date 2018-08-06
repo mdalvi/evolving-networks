@@ -88,16 +88,17 @@ class RecurrentNetwork(Phenome):
                         else:
                             # Creating weighted incoming signals
                             incoming = [self.nodes[self.node_to_type[i_id]][i_id].outgoing * weight for (i_id, weight)
-                                        in
-                                        p_node.incoming]
+                                        in p_node.incoming]
                             p_node.activate(incoming)
         except OverflowError:
             self.is_damaged = True
             return [0.0 for _ in self.nodes['output'].values()]
         return [p_node.outgoing for p_node in self.nodes['output'].values()]
 
-    def reset(self):
+    def reset(self, hard=False):
         for node_dict in self.nodes.values():
             for p_node in node_dict.values():
+                if hard:
+                    p_node.outgoing = 0.0
                 p_node.fired = False
                 p_node.activated = False
