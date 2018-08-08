@@ -16,7 +16,7 @@ from evolving_networks.aggregations import Aggregations
 from evolving_networks.complexity_regulation.blended import Blended as BlendedComplexityRegulation
 from evolving_networks.config import Config
 from evolving_networks.math_util import mean
-from evolving_networks.phenome.recurrent import RecurrentNetwork
+from evolving_networks.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.population import Population
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.speciation.traditional_fixed import TraditionalFixed as TraditionalFixedSpeciation
@@ -32,6 +32,7 @@ class ParallelEvaluator(object):
 
     def evaluate(self, genomes, config):
         max_fitness = float('-Infinity')
+
         process_data = [(g_id, genome, config) for g_id, genome in genomes]
         with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_workers) as executor:  # [1]
             for fitness, (g_id, genome) in zip(executor.map(self.eval_function, process_data), genomes):
@@ -46,7 +47,7 @@ class ParallelEvaluator(object):
 
 def evaluate(attributes):
     g_id, genome, config = attributes
-    recur_network = RecurrentNetwork(genome, config)
+    recur_network = FeedForwardNetwork(genome, config)
     recur_network.initialize(Activations(), Aggregations())
 
     fitness = []
@@ -81,7 +82,7 @@ def main():
         print(best_genome)
 
         env = gym.make('LunarLander-v2')  # [1]
-        recur_network = RecurrentNetwork(best_genome, config)
+        recur_network = FeedForwardNetwork(best_genome, config)
         recur_network.initialize(Activations(), Aggregations())
 
         fitness = []

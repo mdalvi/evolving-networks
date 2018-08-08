@@ -95,7 +95,7 @@ class FeedForwardNetwork(Phenome):
             return [0.0 for _ in self.nodes['output'].values()]
         return [p_node.outgoing for p_node in self.nodes['output'].values()]
 
-    def reset(self):
+    def reset(self, hard=False):
         for node_dict in self.nodes.values():
             for p_node in node_dict.values():
                 p_node.outgoing = 0.0
