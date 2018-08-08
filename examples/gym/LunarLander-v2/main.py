@@ -19,7 +19,7 @@ from evolving_networks.math_util import mean
 from evolving_networks.phenome.recurrent import RecurrentNetwork
 from evolving_networks.population import Population
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
-from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
+from evolving_networks.speciation.traditional_fixed import TraditionalFixed as TraditionalFixedSpeciation
 
 gym.logger.set_level(40)
 
@@ -69,7 +69,7 @@ def evaluate(attributes):
 def main():
     config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
-    speciation_factory = TraditionalSpeciation()
+    speciation_factory = TraditionalFixedSpeciation()
     complexity_regulation_factory = BlendedComplexityRegulation(config)
     population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
