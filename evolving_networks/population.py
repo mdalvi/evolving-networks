@@ -39,11 +39,14 @@ class Statistics(object):
         self.generation = generation
 
         species_best_fitness = []
-        species_details = {'Id': [], 'Size': []}
+        species_details = {'Id': [], 'Size': [], 'Fitness': [], 'AdjFitness': []}
         for s_id, specie in speciation.species.items():
             species_best_fitness.append(specie.members[0].fitness)
             species_details['Id'].append(s_id)
             species_details['Size'].append(len(specie))
+            species_details['Fitness'].append(specie.fitness)
+            species_details['AdjFitness'].append(specie.adjusted_fitness)
+
         self.mean_species_fitness.append(mean(species_best_fitness))
         self.stdev_species_fitness.append(stdev(species_best_fitness))
 
@@ -116,6 +119,7 @@ class Population(object):
         self.speciation.reset_specie_stats()
         self.speciation.sort_specie_genomes()
         self.speciation.calc_best_stats()
+        self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
         self.generation += 1
 
     def fit(self, n=None):
@@ -127,7 +131,6 @@ class Population(object):
             k += 1
             t0 = time.time()
 
-            self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
             self.population = self.reproduction.reproduce(self.speciation.species, self.complexity_regulation,
                                                           self.generation, self.population_size, self.config)
             self.fitness_function(list(self.population.items()), self.config)
@@ -165,6 +168,7 @@ class Population(object):
             self.speciation.reset_specie_stats()
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
+            self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
 
             self.statistics.describe_stats(self.speciation, self.complexity_regulation, members_fitness,
                                            members_complexity, time.time() - t0, self.generation)

@@ -13,7 +13,7 @@ import gym
 
 from evolving_networks.activations.activations import Activations
 from evolving_networks.aggregations import Aggregations
-from evolving_networks.complexity_regulation.blended import Blended as BlendedComplexityRegulation
+from evolving_networks.complexity_regulation.phased import Phased as PhasedComplexityRegulation
 from evolving_networks.config import Config
 from evolving_networks.math_util import mean
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
@@ -52,7 +52,7 @@ def evaluate(attributes):
 
     fitness = []
     env = gym.make('LunarLander-v2')  # [1], [2]
-    for e_idx in range(1):
+    for e_idx in range(10):
         episode_reward = 0
         observation = env.reset()
         recur_network.reset(hard=True)
@@ -71,7 +71,7 @@ def main():
     config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalFixedSpeciation()
-    complexity_regulation_factory = BlendedComplexityRegulation(config)
+    complexity_regulation_factory = PhasedComplexityRegulation(config)
     population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
