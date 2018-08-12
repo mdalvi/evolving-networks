@@ -185,10 +185,11 @@ class TraditionalFixed(Factory):
 
             species_election.remove(s_id)
 
+        nb_members_per_species = max(int(len(population) / config.species.specie_clusters), int(len(population) * 0.2))
         while unspeciated:
             genome_id = random.choice(list(unspeciated))
-            unspeciated.remove(genome_id)
             genome = population[genome_id]
+            unspeciated.remove(genome_id)
 
             if len(representatives) < config.species.specie_clusters:
                 s_id = next(self._specie_indexer)
@@ -201,8 +202,11 @@ class TraditionalFixed(Factory):
                     d = genomic_distance(representative, genome, config)
                     specie_distances.append((d, s_id))
 
-                _, s_id = min(specie_distances, key=lambda x: x[0])
-                members[s_id].append(genome_id)
+                specie_distances = sorted(specie_distances, key=lambda x: x[0])
+                for _, s_id in specie_distances:
+                    if len(members[s_id]) < nb_members_per_species:
+                        members[s_id].append(genome_id)
+                        break
 
         self._genome_to_species = {}
         for s_id, representative_id in representatives.items():

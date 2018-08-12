@@ -90,7 +90,7 @@ class FeedForwardNetwork(Phenome):
                                         in
                                         p_node.incoming]
                             p_node.activate(incoming)
-        except OverflowError:
+        except (OverflowError, ValueError):
             self.is_damaged = True
             return [0.0 for _ in self.nodes['output'].values()]
         return [p_node.outgoing for p_node in self.nodes['output'].values()]

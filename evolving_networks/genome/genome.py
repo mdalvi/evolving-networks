@@ -169,11 +169,13 @@ class Genome(object):
                 self.mutate_delete_connection()
 
         mutate_nodes, mutate_connections = [], []
-        nb_mutate_nodes = probabilistic_round(random.random() * len(self.nodes))
+
+        mutable_nodes = set().union(self.node_ids['hidden'], self.node_ids['output'])
+        nb_mutate_nodes = probabilistic_round(random.random() * len(mutable_nodes))
         nb_mutate_connections = probabilistic_round(random.random() * len(self.connections))
 
         if nb_mutate_nodes > 0:
-            mutate_nodes = np.random.choice(list(self.nodes.keys()), nb_mutate_nodes)
+            mutate_nodes = np.random.choice(list(mutable_nodes), nb_mutate_nodes)
         if nb_mutate_connections > 0 and len(self.connections) > 0:
             mutate_connections = np.random.choice(list(self.connections.keys()), nb_mutate_connections)
 

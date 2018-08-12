@@ -13,7 +13,7 @@ import numpy as np
 from evolving_networks.errors import InvalidConfigurationError
 from evolving_networks.genome.genes.gene import Gene
 from evolving_networks.initializers import random_normal, random_uniform
-from evolving_networks.math_util import clamp, normalize
+from evolving_networks.math_util import clamp
 
 
 class Node(Gene):
@@ -44,27 +44,28 @@ class Node(Gene):
         rmin = getattr(config, 'response_min_value')
         rmax = getattr(config, 'response_max_value')
 
-        if bit == 'normal':
-            self.bias = clamp(random_normal(bim, bis), bmin, bmax)
-        elif bit == 'uniform':
-            self.bias = random_uniform(bim, bis, bmin, bmax)
-        else:
-            raise InvalidConfigurationError()
-
-        if rit == 'normal':
-            self.response = clamp(random_normal(rim, ris), rmin, rmax)
-        elif rit == 'uniform':
-            self.response = random_uniform(rim, ris, rmin, rmax)
-        else:
-            raise InvalidConfigurationError()
-
-        self.aggregation = config.aggregation_default
         if self.type == 'input':
+            self.bias = 0.0
+            self.response = 1.0
+            self.aggregation = 'sum'
             self.activation = 'identity'
-        elif self.type == 'output':
-            self.activation = config.activation_default_output
         else:
-            self.activation = config.activation_default
+            if bit == 'normal':
+                self.bias = clamp(random_normal(bim, bis), bmin, bmax)
+            elif bit == 'uniform':
+                self.bias = random_uniform(bim, bis, bmin, bmax)
+            else:
+                raise InvalidConfigurationError()
+
+            if rit == 'normal':
+                self.response = clamp(random_normal(rim, ris), rmin, rmax)
+            elif rit == 'uniform':
+                self.response = random_uniform(rim, ris, rmin, rmax)
+            else:
+                raise InvalidConfigurationError()
+
+            self.aggregation = config.aggregation_default
+            self.activation = config.activation_default_output if self.type == 'output' else config.activation_default
 
     def crossover(self, other_node):
         assert self.id == other_node.id  # [1][106,109]
@@ -84,6 +85,9 @@ class Node(Gene):
         return node
 
     def mutate(self, config):
+
+        assert self.type != 'input'
+
         bmr = config.bias_mutate_rate
         bms = config.bias_mutate_stdev
         brr = config.bias_replace_rate
