@@ -48,7 +48,6 @@ def evaluate(attributes):
 
     fitness = []
     env = gym.make('LunarLander-v2')  # [1], [2]
-    env.seed(0)
     for e_idx in range(10):
         e_step = 0
         episode_reward = 0
@@ -72,7 +71,7 @@ def main():
     speciation_factory = TraditionalFixedSpeciation()
     complexity_regulation_factory = BlendedComplexityRegulation(config)
     population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
-    parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
+    parallel_evaluator = ParallelEvaluator(num_workers=2, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
 
     while True:
@@ -81,7 +80,6 @@ def main():
         print(best_genome)
 
         env = gym.make('LunarLander-v2')  # [1]
-        env.seed(0)
 
         ff_network = RecurrentNetwork(best_genome, config)
         ff_network.initialize(Activations(), Aggregations())
