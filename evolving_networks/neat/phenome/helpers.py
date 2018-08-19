@@ -1,4 +1,4 @@
-def calc_required_depth(node_ids_all, enabled_connections):
+def calc_required_acyclic_depth(node_ids_all, enabled_connections):
     """
     Calculates the required dependency depth for every node in network
     :return: Node dependency dictionary e.g: {0: [[0]], 1: [[1]], 2: [[2], [0, 1]], 3: [[3], [0, 1, 2]]}
@@ -17,7 +17,7 @@ def calc_required_depth(node_ids_all, enabled_connections):
     return required
 
 
-def calc_neural_path(depth, n_id, path):
+def calc_neural_acyclic_path(depth, n_id, path):
     """
     The function calculates exact order of neuron activations for specified n_id (output id)
     :return: Ordered activation list e.g: [0, 1, 2, 3]
@@ -35,7 +35,7 @@ def calc_neural_path(depth, n_id, path):
                     if depth_id not in path:
                         path.append(depth_id)
                     break
-                calc_neural_path(depth, depth_id, path)
+                calc_neural_acyclic_path(depth, depth_id, path)
 
 
 def calc_required_cyclic_depth(node_ids_all, enabled_connections):

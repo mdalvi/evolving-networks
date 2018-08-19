@@ -1,4 +1,4 @@
-from evolving_networks.phenome.proteins.protein import Protein
+from evolving_networks.neat.phenome.proteins.protein import Protein
 
 
 class Node(Protein):

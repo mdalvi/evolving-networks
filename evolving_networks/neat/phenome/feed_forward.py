@@ -1,11 +1,12 @@
-from evolving_networks.phenome.helpers import calc_required_cyclic_depth, calc_neural_cyclic_path
 from evolving_networks.phenome.phenome import Phenome
-from evolving_networks.phenome.proteins.node import Node
+
+from evolving_networks.neat.phenome.helpers import calc_required_acyclic_depth, calc_neural_acyclic_path
+from evolving_networks.neat.phenome.proteins.node import Node
 
 
-class RecurrentNetwork(Phenome):
+class FeedForwardNetwork(Phenome):
     def __init__(self, genome, config):
-        super(RecurrentNetwork, self).__init__()
+        super(FeedForwardNetwork, self).__init__()
         self.genome = genome
         self.config = config
 
@@ -29,11 +30,10 @@ class RecurrentNetwork(Phenome):
         enabled_connections = [(connection.id, connection.source_id, connection.target_id) for connection in
                                self.genome.connections.values() if connection.enabled]
 
-        depth = calc_required_cyclic_depth(self.genome.node_ids['all'], enabled_connections)
+        depth = calc_required_acyclic_depth(self.genome.node_ids['all'], enabled_connections)
         for n_id in self.genome.node_ids['output']:
             path = []
-            searching_for = set()
-            calc_neural_cyclic_path(depth, n_id, path, searching_for)
+            calc_neural_acyclic_path(depth, n_id, path)
             required_nodes.update(path)
             self.neuronal_paths[n_id] = path
 
@@ -69,7 +69,7 @@ class RecurrentNetwork(Phenome):
             # Special case incoming format for input nodes
             p_node.incoming = [input_val]
 
-        # Recurrent reset
+        # Feed forward reset
         self.reset()
 
         try:
@@ -88,7 +88,8 @@ class RecurrentNetwork(Phenome):
                         else:
                             # Creating weighted incoming signals
                             incoming = [self.nodes[self.node_to_type[i_id]][i_id].outgoing * weight for (i_id, weight)
-                                        in p_node.incoming]
+                                        in
+                                        p_node.incoming]
                             p_node.activate(incoming)
         except (OverflowError, ValueError):
             self.is_damaged = True
@@ -98,7 +99,6 @@ class RecurrentNetwork(Phenome):
     def reset(self, hard=False):
         for node_dict in self.nodes.values():
             for p_node in node_dict.values():
-                if hard:
-                    p_node.outgoing = 0.0
+                p_node.outgoing = 0.0
                 p_node.fired = False
                 p_node.activated = False

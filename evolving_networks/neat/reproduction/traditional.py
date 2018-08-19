@@ -9,9 +9,9 @@
 
 import numpy as np
 
-from evolving_networks.genome.genome import Genome
 from evolving_networks.math_util import probabilistic_round
-from evolving_networks.reproduction.factory import Factory
+from evolving_networks.neat.genome.genome import Genome
+from evolving_networks.neat.reproduction.factory import Factory
 
 
 class Traditional(Factory):

@@ -10,6 +10,3 @@ class Factory(object):
 
     def reproduce(self, species, complexity_regulation, generation, population_size, config):
         pass
-
-    def _reproduce_off_springs(self, species, complexity_regulation, generation, config):
-        pass

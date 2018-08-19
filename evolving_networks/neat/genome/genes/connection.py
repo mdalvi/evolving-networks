@@ -11,9 +11,9 @@ import random
 import numpy as np
 
 from evolving_networks.errors import InvalidConfigurationError
-from evolving_networks.genome.genes.gene import Gene
 from evolving_networks.initializers import random_normal, random_uniform
 from evolving_networks.math_util import clamp, normalize
+from evolving_networks.neat.genome.genes.gene import Gene
 
 
 class Connection(Gene):

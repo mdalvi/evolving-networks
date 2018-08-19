@@ -12,10 +12,10 @@ import random
 from itertools import count
 
 import numpy as np
-
-from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.genome.genes.connection import Connection
 from evolving_networks.genome.genes.node import Node
+
+from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.math_util import normalize, probabilistic_round
 
 
@@ -175,9 +175,9 @@ class Genome(object):
         nb_mutate_connections = probabilistic_round(random.random() * len(self.connections))
 
         if nb_mutate_nodes > 0:
-            mutate_nodes = np.random.choice(list(mutable_nodes), nb_mutate_nodes)
+            mutate_nodes = np.random.choice(list(mutable_nodes), nb_mutate_nodes, replace=False)
         if nb_mutate_connections > 0 and len(self.connections) > 0:
-            mutate_connections = np.random.choice(list(self.connections.keys()), nb_mutate_connections)
+            mutate_connections = np.random.choice(list(self.connections.keys()), nb_mutate_connections, replace=False)
 
         for n_id in mutate_nodes:
             self.nodes[n_id].mutate(config.node)
@@ -443,8 +443,8 @@ class Genome(object):
         self.node_indexer = count(max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr) + 1)
         self.node_indexer_cntr = max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr)
 
-    def crossover_asexual(self, parent_1):
-        for node in parent_1.nodes.values():
+    def crossover_asexual(self, parent):
+        for node in parent.nodes.values():
             assert node.id not in self.nodes
             self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
             self.node_ids['all'].add(node.id)
@@ -452,14 +452,14 @@ class Genome(object):
 
         self._compute_probable_connectors()
 
-        for connection in parent_1.connections.values():
+        for connection in parent.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
 
-        self.node_indexer = count(parent_1.node_indexer_cntr + 1)
-        self.node_indexer_cntr = parent_1.node_indexer_cntr
+        self.node_indexer = count(parent.node_indexer_cntr + 1)
+        self.node_indexer_cntr = parent.node_indexer_cntr
 
-    def clone(self, original):
-        for node in original.nodes.values():
+    def clone(self, parent):
+        for node in parent.nodes.values():
             assert node.id not in self.nodes
             self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
             self.node_ids['all'].add(node.id)
@@ -467,11 +467,11 @@ class Genome(object):
 
         self._compute_probable_connectors()
 
-        for connection in original.connections.values():
+        for connection in parent.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
 
-        self.node_indexer = count(original.node_indexer_cntr + 1)
-        self.node_indexer_cntr = original.node_indexer_cntr
+        self.node_indexer = count(parent.node_indexer_cntr + 1)
+        self.node_indexer_cntr = parent.node_indexer_cntr
 
     def _next_node_id(self):
         n_id = next(self.node_indexer)
