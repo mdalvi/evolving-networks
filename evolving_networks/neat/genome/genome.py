@@ -126,12 +126,12 @@ class Genome(object):
         assert 0.0 <= dist <= 1.0
         return dist
 
-    def mutate(self, complexity_regulation, config):
+    def mutate(self, regulation, config):
 
-        node_add_rate = complexity_regulation.node_add_rate
-        node_delete_rate = complexity_regulation.node_delete_rate
-        conn_add_rate = complexity_regulation.conn_add_rate
-        conn_delete_rate = complexity_regulation.conn_delete_rate
+        node_add_rate = regulation.node_add_rate
+        node_delete_rate = regulation.node_delete_rate
+        conn_add_rate = regulation.conn_add_rate
+        conn_delete_rate = regulation.conn_delete_rate
 
         if config.genome.single_structural_mutation:
             success = False

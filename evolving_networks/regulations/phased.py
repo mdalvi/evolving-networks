@@ -6,7 +6,7 @@
 [1] http://sharpneat.sourceforge.net/phasedsearch.html
 
 """
-from evolving_networks.complexity_regulation.factory import Factory
+from evolving_networks.regulations.factory import Factory
 
 
 class Phased(Factory):  # [1]
@@ -18,7 +18,6 @@ class Phased(Factory):  # [1]
         self.conn_add_rate = config.genome.conn_add_rate
         self.node_delete_rate = 0.0
         self.conn_delete_rate = 0.0
-        self.off_spring_asexual_rate = config.species.off_spring_asexual_rate
 
         self.complexity_type = config.neat.phased_complexity_type
         self.complexity_threshold = config.neat.phased_complexity_threshold
@@ -54,7 +53,6 @@ class Phased(Factory):  # [1]
                 self.conn_add_rate = 0.0
                 self.node_delete_rate = self.config.genome.node_delete_rate
                 self.conn_delete_rate = self.config.genome.conn_delete_rate
-                # self.off_spring_asexual_rate =  self.config.species.off_spring_asexual_rate
                 self.fitness_plateau = 0
 
         elif self.mode == 'simplifying':
@@ -72,7 +70,6 @@ class Phased(Factory):  # [1]
                 self.conn_add_rate = self.config.genome.conn_add_rate
                 self.node_delete_rate = 0.0
                 self.conn_delete_rate = 0.0
-                # self.off_spring_asexual_rate = self.config.species.off_spring_asexual_rate
                 self.fitness_plateau = 0
 
     def __str__(self):

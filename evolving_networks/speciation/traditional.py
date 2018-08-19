@@ -79,7 +79,7 @@ class Traditional(Factory):
                 del self.species[s_id]
                 nb_remaining -= 1
 
-    def calc_specie_stats(self, generation, complexity_regulation, config):
+    def calc_specie_stats(self, generation, config):
         target_size_sum = 0
         mean_fitness_sum = 0.0
 
@@ -151,8 +151,7 @@ class Traditional(Factory):
                 specie.elites = 1
 
             specie.off_springs = specie.target_size - specie.elites
-            specie.off_spring_asexual = probabilistic_round(
-                specie.off_springs * complexity_regulation.off_spring_asexual_rate)
+            specie.off_spring_asexual = probabilistic_round(specie.off_springs * config.species.off_spring_asexual_rate)
             specie.off_spring_sexual = specie.off_springs - specie.off_spring_asexual
 
             specie.survivors = max(1, probabilistic_round(len(specie.members) * config.species.survivor_rate))

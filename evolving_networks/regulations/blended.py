@@ -1,4 +1,4 @@
-from evolving_networks.complexity_regulation.factory import Factory
+from evolving_networks.regulations.factory import Factory
 
 
 class Blended(Factory):

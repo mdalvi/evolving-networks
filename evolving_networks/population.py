@@ -27,7 +27,7 @@ class Statistics(object):
             return 0.0
         return mean(self.mean_complexity[-100:])
 
-    def describe_stats(self, speciation, complexity_regulation, member_fitness, members_complexity, elapsed_time,
+    def describe_stats(self, speciation, regulation, member_fitness, members_complexity, elapsed_time,
                        generation):
         self.max_fitness.append(max(member_fitness))
         self.mean_fitness.append(mean(member_fitness))
@@ -65,15 +65,15 @@ class Statistics(object):
                            'Stdev': [self.stdev_fitness[-1], self.stdev_complexity[-1], self.stdev_species_fitness[-1]]}
         print(tabulate(fitness_details, headers="keys", numalign="right"))
         print(tabulate(species_details, headers="keys", numalign="right"))
-        print(str(complexity_regulation))
+        print(str(regulation))
         print("\nElapsed generation time: {0:.2f} sec ".format(self.elapsed_generation_time[-1]))
 
 
 class Population(object):
-    def __init__(self, reproduction, speciation, complexity_regulation):
+    def __init__(self, reproduction, speciation, regulation):
         self.reproduction = reproduction
         self.speciation = speciation
-        self.complexity_regulation = complexity_regulation
+        self.regulation = regulation
 
         self.config = None
         self.generation = 0
@@ -119,7 +119,7 @@ class Population(object):
         self.speciation.reset_specie_stats()
         self.speciation.sort_specie_genomes()
         self.speciation.calc_best_stats()
-        self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
+        self.speciation.calc_specie_stats(self.generation, self.regulation, self.config)
         self.generation += 1
 
     def fit(self, n=None):
@@ -131,7 +131,7 @@ class Population(object):
             k += 1
             t0 = time.time()
 
-            self.population = self.reproduction.reproduce(self.speciation.species, self.complexity_regulation,
+            self.population = self.reproduction.reproduce(self.speciation.species, self.regulation,
                                                           self.generation, self.population_size, self.config)
             self.fitness_function(list(self.population.items()), self.config)
 
@@ -168,9 +168,9 @@ class Population(object):
             self.speciation.reset_specie_stats()
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
-            self.speciation.calc_specie_stats(self.generation, self.complexity_regulation, self.config)
+            self.speciation.calc_specie_stats(self.generation, self.regulation, self.config)
 
-            self.statistics.describe_stats(self.speciation, self.complexity_regulation, members_fitness,
+            self.statistics.describe_stats(self.speciation, self.regulation, members_fitness,
                                            members_complexity, time.time() - t0, self.generation)
 
             if not self.config.neat.no_fitness_termination:
@@ -178,6 +178,6 @@ class Population(object):
                 if fv >= self.config.neat.fitness_threshold:
                     break
 
-            self.complexity_regulation.determine_mode(self.statistics)
+            self.regulation.determine_mode(self.statistics)
             self.generation += 1
         return self.statistics

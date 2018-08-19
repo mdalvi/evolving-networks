@@ -8,5 +8,5 @@ class Factory(object):
     def populate(self, population_size, generation, config):
         raise NotImplementedError()
 
-    def reproduce(self, species, complexity_regulation, generation, population_size, config):
+    def reproduce(self, species, regulation, generation, population_size, config):
         pass
