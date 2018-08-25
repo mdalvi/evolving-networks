@@ -1,6 +1,5 @@
-from evolving_networks.phenome.phenome import Phenome
-
 from evolving_networks.neat.phenome.helpers import calc_required_cyclic_depth, calc_neural_cyclic_path
+from evolving_networks.neat.phenome.phenome import Phenome
 from evolving_networks.neat.phenome.proteins.node import Node
 
 
@@ -101,5 +100,4 @@ class RecurrentNetwork(Phenome):
             for p_node in node_dict.values():
                 if hard:
                     p_node.outgoing = 0.0
-                p_node.fired = False
                 p_node.activated = False

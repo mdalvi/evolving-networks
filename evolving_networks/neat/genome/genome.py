@@ -12,11 +12,11 @@ import random
 from itertools import count
 
 import numpy as np
-from evolving_networks.genome.genes.connection import Connection
-from evolving_networks.genome.genes.node import Node
 
 from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.math_util import normalize, probabilistic_round
+from evolving_networks.neat.genome.genes.connection import Connection
+from evolving_networks.neat.genome.genes.node import Node
 
 
 class Genome(object):

@@ -1,6 +1,5 @@
-from evolving_networks.phenome.phenome import Phenome
-
 from evolving_networks.neat.phenome.helpers import calc_required_acyclic_depth, calc_neural_acyclic_path
+from evolving_networks.neat.phenome.phenome import Phenome
 from evolving_networks.neat.phenome.proteins.node import Node
 
 
@@ -100,5 +99,4 @@ class FeedForwardNetwork(Phenome):
         for node_dict in self.nodes.values():
             for p_node in node_dict.values():
                 p_node.outgoing = 0.0
-                p_node.fired = False
                 p_node.activated = False

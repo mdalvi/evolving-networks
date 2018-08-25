@@ -13,14 +13,8 @@ class Node(Protein):
 
         self.incoming = []
         self.outgoing = 0.0
-
-        self.fired = False
         self.activated = False
 
     def activate(self, inputs):
-        if inputs:
-            self.outgoing, self.fired = self.activation.activate((self.aggregation(inputs) * self.response) + self.bias)
-        else:
-            self.outgoing = 0.0
-            self.fired = False
+        self.outgoing = self.activation((self.aggregation(inputs) * self.response) + self.bias) if inputs else 0.0
         self.activated = True

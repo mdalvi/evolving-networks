@@ -119,7 +119,7 @@ class Population(object):
         self.speciation.reset_specie_stats()
         self.speciation.sort_specie_genomes()
         self.speciation.calc_best_stats()
-        self.speciation.calc_specie_stats(self.generation, self.regulation, self.config)
+        self.speciation.calc_specie_stats(self.generation, self.population_size, self.config)
         self.generation += 1
 
     def fit(self, n=None):
@@ -152,8 +152,6 @@ class Population(object):
                 del self.population[g_id]
 
             if self.best_genome is None or best.fitness > self.best_genome.fitness:
-                if self.best_genome is not None:
-                    print(self.best_genome.fitness, best.fitness)
                 self.best_genome = best
 
             min_fitness, max_fitness = min(members_fitness), max(members_fitness)
@@ -168,7 +166,7 @@ class Population(object):
             self.speciation.reset_specie_stats()
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
-            self.speciation.calc_specie_stats(self.generation, self.regulation, self.config)
+            self.speciation.calc_specie_stats(self.generation, self.population_size, self.config)
 
             self.statistics.describe_stats(self.speciation, self.regulation, members_fitness,
                                            members_complexity, time.time() - t0, self.generation)
