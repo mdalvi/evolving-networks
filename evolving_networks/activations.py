@@ -96,7 +96,7 @@ def relu_activation(x):
     return max(0.0, x)  # [16]
 
 
-class ActivationFunctionSet(object):
+class Activations(object):
     def __init__(self):
         self.functions = {}
         self._add('identity', identity_activation)
