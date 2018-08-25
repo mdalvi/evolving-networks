@@ -9,7 +9,6 @@ class Complexify(Factory):
         self.conn_add_rate = config.genome.conn_add_rate
         self.node_delete_rate = 0.0
         self.conn_delete_rate = 0.0
-        self.off_spring_asexual_rate = config.species.off_spring_asexual_rate
 
     def determine_mode(self, statistics):
         pass
