@@ -110,8 +110,7 @@ class Agglomerative(Factory):
                 target_size_sum += specie.target_size
         else:
             for s_id, specie in self.species.items():
-                specie.target_size_float = (
-                                               specie.adjusted_fitness_mean / mean_fitness_sum) * population_size
+                specie.target_size_float = (specie.adjusted_fitness_mean / mean_fitness_sum) * population_size
                 target_size = probabilistic_round(specie.target_size_float)
                 if target_size == 0 and s_id == self.best_specie_idx:
                     target_size = 1
