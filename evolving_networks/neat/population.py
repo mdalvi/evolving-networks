@@ -131,8 +131,9 @@ class Population(object):
             k += 1
             t0 = time.time()
 
-            self.population = self.reproduction.reproduce(self.speciation.species, self.regulation,
-                                                          self.generation, self.population_size, self.config)
+            self.population = self.reproduction.reproduce(species=self.speciation.species,
+                                                          generation=self.generation, regulation=self.regulation,
+                                                          population_size=self.population_size, config=self.config)
             self.fitness_function(list(self.population.items()), self.config)
 
             best = None

@@ -8,102 +8,112 @@
 
 """
 import concurrent.futures
-import time
 
 import gym
-from evolving_networks.activations.activations import Activations
-from evolving_networks.config import Config
+import torch.nn as nn
+import torch.nn.functional as F
 
-from evolving_networks.aggregations import Aggregations
 from evolving_networks.math_util import mean
-from evolving_networks.neat.phenome.recurrent import RecurrentNetwork
-from evolving_networks.neat.population import Population
-from evolving_networks.neat.reproduction.traditional import Traditional as TraditionalReproduction
-# from evolving_networks.regulations.phased import Phased as PhasedComplexityRegulation
-from evolving_networks.regulations.blended import Blended as BlendedComplexityRegulation
-from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
+from evolving_networks.pytorch.configurations.config import Config
+# from evolving_networks.pytorch.phenome.feed_forward import FeedForwardNetwork
+from evolving_networks.pytorch.phenome.recurrent import RecurrentNetwork
+from evolving_networks.pytorch.population import Population
+from evolving_networks.pytorch.reproduction.traditional import Traditional as TraditionalReproduction
+from evolving_networks.regulations.no_regulation import NoRegulation
+from evolving_networks.reporting import reporter, stdout
+from evolving_networks.speciation.traditional_fixed import TraditionalFixed as TraditionalFixedSpeciation
 
 gym.logger.set_level(40)
 
 
+class RecurrentModel(nn.Module):
+    def __init__(self):
+        super(RecurrentModel, self).__init__()
+        self.rnn = nn.RNN(input_size=2, hidden_size=4, num_layers=2, nonlinearity='relu')
+        self.fc1 = nn.Linear(in_features=4, out_features=3)
+
+        self.hidden = None
+
+    def forward(self, x):
+        rnn_output, self.hidden = self.rnn(x, self.hidden)
+        fc1_output = F.softmax(self.fc1(rnn_output), dim=2)
+        return fc1_output
+
+    def reset(self):
+        self.hidden = None
+
+
 class ParallelEvaluator(object):
     def __init__(self, num_workers, eval_function):
-        self.evaluations = 0
         self.num_workers = num_workers
         self.eval_function = eval_function
 
     def evaluate(self, genomes, config):
-        t0 = time.time()
-        max_fitness = float('-Infinity')
         process_data = [(g_id, genome, config) for g_id, genome in genomes]
         with concurrent.futures.ProcessPoolExecutor(max_workers=self.num_workers) as executor:  # [1]
             for fitness, (g_id, genome) in zip(executor.map(self.eval_function, process_data), genomes):
-
-                if fitness > max_fitness:
-                    max_fitness = fitness
-
                 genome.fitness = fitness
-
-        self.evaluations += 1
-        print('Iter [{0}], Time [{1} secs], Max Fitness [{2}]'.format(self.evaluations, round(time.time() - t0),
-                                                                      max_fitness))
 
 
 def evaluate(attributes):
     g_id, genome, config = attributes
-    recur_network = RecurrentNetwork(genome, config)
-    recur_network.initialize(Activations(), Aggregations())
+    network = RecurrentNetwork(genome, config)
+    network.initialize(RecurrentModel)
 
     fitness = []
     env = gym.make('MountainCar-v0')  # [1], [2]
-    for e_idx in range(100):
-        observation = env.reset()
+    for e_idx in range(10):
         episode_reward = 0
+        observation = env.reset()
+        network.reset(hard=True)
         while True:
-            action = recur_network.activate(observation.tolist())
+            action = network.activate(observation.tolist())
             action = action.index(max(action))
             observation, reward, done, info = env.step(action)
             episode_reward += reward
             if done:
                 break
-
         fitness.append(episode_reward)
     return mean(fitness)
 
 
 def main():
-    config = Config(filename='config/config_2.ini')
-    reproduction_factory = TraditionalReproduction()
-    speciation_factory = TraditionalSpeciation()
-    regulation_factory = BlendedComplexityRegulation(config)
-    population = Population(reproduction_factory, speciation_factory, regulation_factory)
+    config = Config(filename='config/config_3.ini')
+    reproduction_factory = TraditionalReproduction(RecurrentModel)
+    speciation_factory = TraditionalFixedSpeciation()
+    regulation_factory = NoRegulation(config)
+    reporting_factory = reporter.Reporter()
+    reporting_factory.add_report(stdout.StdOut())
+    population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
-    hist = population.fit()
+    population.fit()
     best_genome = population.best_genome
     print(best_genome)
 
-    # Champion solution
     env = gym.make('MountainCar-v0')  # [1]
-    recur_network = RecurrentNetwork(best_genome, config)
-    recur_network.initialize(Activations(), Aggregations())
+    env = gym.wrappers.Monitor(env, 'results', force=True)
+    network = RecurrentNetwork(best_genome, config)
+    network.initialize(RecurrentModel)
 
     fitness = []
-    for e_idx in range(100):
-        observation = env.reset()
+    for e_idx in range(10):
         episode_reward = 0
+        observation = env.reset()
+        network.reset(hard=True)
         while True:
-            if e_idx % 10 == 0:
-                env.render()
-                time.sleep(0.075)
-            action = recur_network.activate(observation.tolist())
+            env.render()
+            action = network.activate(observation.tolist())
             action = action.index(max(action))
             observation, reward, done, info = env.step(action)
             episode_reward += reward
             if done:
                 break
         fitness.append(episode_reward)
-    print("Examination mean fitness [{}]".format(mean(fitness)))
+    env.close()
+    env.env.close()
+    fitness_reward = mean(fitness)
+    print("Examination mean fitness [{}]".format(fitness_reward))
 
 
 if __name__ == "__main__":

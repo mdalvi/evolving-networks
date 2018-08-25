@@ -1,8 +1,6 @@
 import time
 
-from tabulate import tabulate
-
-from evolving_networks.math_util import stat_functions, normalize, mean, stdev
+from evolving_networks.math_util import stat_functions, normalize, mean
 
 
 class Statistics(object):
@@ -57,7 +55,7 @@ class Statistics(object):
         print("\nTotal number of species {0}".format(len(speciation.species)))
         print("Best fitness {0}".format(self.best_fitness))
         print("Current best fitness {0} @ complexity {1}".format(self.current_best.fitness,
-                                                                   self.current_best.complexity))
+                                                                 self.current_best.complexity))
 
         # fitness_details = {'Entity': ['Population Fitness', 'Population Complexity', 'Species Fitness (Best)'],
         #                    'Mean': [self.mean_fitness[-1], self.mean_complexity[-1], self.mean_species_fitness[-1]],
@@ -132,8 +130,9 @@ class Population(object):
             t0 = time.time()
             self.reporter.start_generation(self.generation)
             self.reporter.pre_reproduction()
-            self.population = self.reproduction.reproduce(self.speciation.species, self.regulation,
-                                                          self.generation, self.population_size, self.config)
+            self.population = self.reproduction.reproduce(species=self.speciation.species,
+                                                          generation=self.generation, regulation=self.regulation,
+                                                          population_size=self.population_size, config=self.config)
             self.reporter.post_reproduction()
             self.reporter.pre_evaluation()
             self.fitness_function(list(self.population.items()), self.config)
