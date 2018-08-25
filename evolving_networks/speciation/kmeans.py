@@ -82,7 +82,7 @@ class KMeans(Factory):
                 del self.species[s_id]
                 nb_remaining -= 1
 
-    def calc_specie_stats(self, generation, config):
+    def calc_specie_stats(self, generation, population_size, config):
         target_size_sum = 0
         mean_fitness_sum = 0.0
 
@@ -103,7 +103,7 @@ class KMeans(Factory):
             mean_fitness_sum += specie.adjusted_fitness_mean
 
         if mean_fitness_sum == 0.0:
-            target_size_float = config.neat.population_size / len(self.species)
+            target_size_float = population_size / len(self.species)
             for specie in self.species.values():
                 specie.target_size_float = target_size_float
                 specie.target_size = probabilistic_round(target_size_float)
@@ -111,14 +111,14 @@ class KMeans(Factory):
         else:
             for s_id, specie in self.species.items():
                 specie.target_size_float = (
-                                               specie.adjusted_fitness_mean / mean_fitness_sum) * config.neat.population_size
+                                               specie.adjusted_fitness_mean / mean_fitness_sum) * population_size
                 target_size = probabilistic_round(specie.target_size_float)
                 if target_size == 0 and s_id == self.best_specie_idx:
                     target_size = 1
                 specie.target_size = target_size
                 target_size_sum += specie.target_size
 
-        target_size_delta = target_size_sum - config.neat.population_size
+        target_size_delta = target_size_sum - population_size
         if target_size_delta < 0:
             if target_size_delta == -1:
                 self.species[self.best_specie_idx].target_size += 1

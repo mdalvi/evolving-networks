@@ -17,7 +17,7 @@ class Factory(object):
     def _purge_stagnant_species(self, generation, config):
         raise NotImplementedError()
 
-    def calc_specie_stats(self, generation, config):
+    def calc_specie_stats(self, generation, population_size, config):
         raise NotImplementedError()
 
     def speciate(self, population, generation, config):
