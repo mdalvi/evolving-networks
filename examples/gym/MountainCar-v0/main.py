@@ -11,16 +11,16 @@ import concurrent.futures
 import time
 
 import gym
-
 from evolving_networks.activations.activations import Activations
-from evolving_networks.aggregations import Aggregations
-from evolving_networks.complexity_regulation.phased import Phased as PhasedComplexityRegulation
-from evolving_networks.complexity_regulation.blended import Blended as BlendedComplexityRegulation
 from evolving_networks.config import Config
+
+from evolving_networks.aggregations import Aggregations
 from evolving_networks.math_util import mean
-from evolving_networks.phenome.recurrent import RecurrentNetwork
-from evolving_networks.population import Population
-from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
+from evolving_networks.neat.phenome.recurrent import RecurrentNetwork
+from evolving_networks.neat.population import Population
+from evolving_networks.neat.reproduction.traditional import Traditional as TraditionalReproduction
+# from evolving_networks.regulations.phased import Phased as PhasedComplexityRegulation
+from evolving_networks.regulations.blended import Blended as BlendedComplexityRegulation
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
 gym.logger.set_level(40)
@@ -75,8 +75,8 @@ def main():
     config = Config(filename='config/config_2.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
-    complexity_regulation_factory = BlendedComplexityRegulation(config)
-    population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
+    regulation_factory = BlendedComplexityRegulation(config)
+    population = Population(reproduction_factory, speciation_factory, regulation_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
     hist = population.fit()

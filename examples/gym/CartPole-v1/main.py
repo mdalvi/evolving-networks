@@ -12,14 +12,14 @@ import time
 
 import gym
 
-from evolving_networks.activations.activations import Activations
+from evolving_networks.activations import Activations
 from evolving_networks.aggregations import Aggregations
-from evolving_networks.complexity_regulation.phased import Phased as PhasedComplexityRegulation
-from evolving_networks.config import Config
 from evolving_networks.math_util import mean
-from evolving_networks.phenome.recurrent import RecurrentNetwork
-from evolving_networks.population import Population
-from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
+from evolving_networks.neat.configurations.config import Config
+from evolving_networks.neat.phenome.feed_forward import FeedForwardNetwork
+from evolving_networks.neat.population import Population
+from evolving_networks.neat.reproduction.traditional import Traditional as TraditionalReproduction
+from evolving_networks.regulations.phased import Phased as PhasedComplexityRegulation
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
 gym.logger.set_level(40)
@@ -50,16 +50,17 @@ class ParallelEvaluator(object):
 
 def evaluate(attributes):
     g_id, genome, config = attributes
-    recur_network = RecurrentNetwork(genome, config)
-    recur_network.initialize(Activations(), Aggregations())
+    network = FeedForwardNetwork(genome, config)
+    network.initialize(Activations(), Aggregations())
 
     fitness = []
     env = gym.make('CartPole-v1')  # [1], [2]
     for e_idx in range(100):
+        network.reset(hard=True)
         observation = env.reset()
         episode_reward = 0
         while True:
-            action = recur_network.activate(observation.tolist())[0]
+            action = network.activate(observation.tolist())[0]
             action = 0 if action < 0.5 else 1
             observation, reward, done, info = env.step(action)
             episode_reward += reward
@@ -70,31 +71,32 @@ def evaluate(attributes):
 
 
 def main():
-    config = Config(filename='config/config_3.ini')
+    config = Config(filename='config/config_1.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
-    complexity_regulation_factory = PhasedComplexityRegulation(config)
-    population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
+    regulation_factory = PhasedComplexityRegulation(config)
+    population = Population(reproduction_factory, speciation_factory, regulation_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
-    hist = population.fit()
+    population.fit()
     best_genome = population.best_genome
     print(best_genome)
 
     # Champion solution
     env = gym.make('CartPole-v1')  # [1]
-    recur_network = RecurrentNetwork(best_genome, config)
-    recur_network.initialize(Activations(), Aggregations())
+    network = FeedForwardNetwork(best_genome, config)
+    network.initialize(Activations(), Aggregations())
 
     fitness = []
     for e_idx in range(100):
+        network.reset(hard=True)
         observation = env.reset()
         episode_reward = 0
         while True:
             if e_idx % 10 == 0:
                 env.render()
                 time.sleep(0.075)
-            action = recur_network.activate(observation.tolist())[0]
+            action = network.activate(observation.tolist())[0]
             action = 0 if action < 0.5 else 1
             observation, reward, done, info = env.step(action)
             episode_reward += reward

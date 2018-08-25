@@ -10,21 +10,51 @@
 import concurrent.futures
 
 import gym
+import torch.nn as nn
+import torch.nn.functional as F
 
-from evolving_networks.activations.activations import Activations
-from evolving_networks.aggregations import Aggregations
-# from evolving_networks.complexity_regulation.phased import Phased as PhasedComplexityRegulation
-from evolving_networks.complexity_regulation.blended import Blended as BlendedComplexityRegulation
-from evolving_networks.config import Config
 from evolving_networks.math_util import mean
-# from evolving_networks.phenome.feed_forward import FeedForwardNetwork
-from evolving_networks.phenome.recurrent import RecurrentNetwork
-from evolving_networks.population import Population
-from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
-# from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
+from evolving_networks.pytorch.configurations.config import Config
+from evolving_networks.pytorch.phenome.feed_forward import FeedForwardNetwork
+# from evolving_networks.pytorch.phenome.recurrent import RecurrentNetwork
+from evolving_networks.pytorch.population import Population
+from evolving_networks.pytorch.reproduction.traditional import Traditional as TraditionalReproduction
+from evolving_networks.regulations.no_regulation import NoRegulation
+from evolving_networks.reporting import reporter, stdout
 from evolving_networks.speciation.traditional_fixed import TraditionalFixed as TraditionalFixedSpeciation
 
 gym.logger.set_level(40)
+
+
+class FeedForwardModel(nn.Module):
+    def __init__(self):
+        super(FeedForwardModel, self).__init__()
+        self.fc1 = nn.Linear(in_features=8, out_features=8)
+        self.fc2 = nn.Linear(in_features=8, out_features=8)
+        self.fc3 = nn.Linear(in_features=8, out_features=4)
+
+    def forward(self, x):
+        fc1_output = F.relu(self.fc1(x))
+        fc2_output = F.relu(self.fc2(fc1_output))
+        fc3_output = F.softmax(self.fc3(fc2_output), dim=0)
+        return fc3_output
+
+
+class RecurrentModel(nn.Module):
+    def __init__(self):
+        super(RecurrentModel, self).__init__()
+        self.rnn = nn.RNN(input_size=8, hidden_size=8, num_layers=1, nonlinearity='relu')
+        self.fc1 = nn.Linear(in_features=8, out_features=4)
+
+        self.hidden = None
+
+    def forward(self, x):
+        rnn_output, self.hidden = self.rnn(x, self.hidden)
+        fc1_output = F.softmax(self.fc1(rnn_output), dim=2)
+        return fc1_output
+
+    def reset(self):
+        self.hidden = None
 
 
 class ParallelEvaluator(object):
@@ -43,8 +73,8 @@ class ParallelEvaluator(object):
 
 def evaluate(attributes):
     g_id, genome, config = attributes
-    ff_network = RecurrentNetwork(genome, config)
-    ff_network.initialize(Activations(), Aggregations())
+    network = FeedForwardNetwork(genome, config)
+    network.initialize(FeedForwardModel)
 
     fitness = []
     env = gym.make('LunarLander-v2')  # [1], [2]
@@ -52,9 +82,9 @@ def evaluate(attributes):
         e_step = 0
         episode_reward = 0
         observation = env.reset()
-        ff_network.reset(hard=True)
+        network.reset(hard=True)
         while True:
-            action = ff_network.activate(observation.tolist())
+            action = network.activate(observation.tolist())
             action = action.index(max(action))
             observation, reward, done, info = env.step(action)
             episode_reward += reward
@@ -66,12 +96,14 @@ def evaluate(attributes):
 
 
 def main():
-    config = Config(filename='config/config_2.ini')
-    reproduction_factory = TraditionalReproduction()
+    config = Config(filename='config/config_3.ini')
+    reproduction_factory = TraditionalReproduction(FeedForwardModel)
     speciation_factory = TraditionalFixedSpeciation()
-    complexity_regulation_factory = BlendedComplexityRegulation(config)
-    population = Population(reproduction_factory, speciation_factory, complexity_regulation_factory)
-    parallel_evaluator = ParallelEvaluator(num_workers=2, eval_function=evaluate)
+    regulation_factory = NoRegulation(config)
+    reporting_factory = reporter.Reporter()
+    reporting_factory.add_report(stdout.StdOut())
+    population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
+    parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
 
     while True:
@@ -80,31 +112,30 @@ def main():
         print(best_genome)
 
         env = gym.make('LunarLander-v2')  # [1]
-
-        ff_network = RecurrentNetwork(best_genome, config)
-        ff_network.initialize(Activations(), Aggregations())
+        env = gym.wrappers.Monitor(env, 'results', force=True)
+        network = FeedForwardNetwork(best_genome, config)
+        network.initialize(FeedForwardModel)
 
         fitness = []
         for e_idx in range(10):
-            e_step = 0
             episode_reward = 0
             observation = env.reset()
-            ff_network.reset(hard=True)
+            network.reset(hard=True)
             while True:
                 env.render()
-                action = ff_network.activate(observation.tolist())
+                action = network.activate(observation.tolist())
                 action = action.index(max(action))
                 observation, reward, done, info = env.step(action)
                 episode_reward += reward
-                e_step += 1
                 if done:
                     break
             fitness.append(episode_reward)
         env.close()
+        env.env.close()
         fitness_reward = mean(fitness)
         print("Examination mean fitness [{}]".format(fitness_reward))
 
-        if fitness_reward >= config.neat.fitness_threshold:
+        if fitness_reward >= config.pytorch.fitness_threshold:
             break
 
 
