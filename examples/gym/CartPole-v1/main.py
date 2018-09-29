@@ -20,6 +20,7 @@ from evolving_networks.neat.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.neat.population import Population
 from evolving_networks.neat.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.regulations.phased import Phased as PhasedComplexityRegulation
+from evolving_networks.reporting import reporter, stdout
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
 gym.logger.set_level(40)
@@ -44,8 +45,6 @@ class ParallelEvaluator(object):
                 genome.fitness = fitness
 
         self.evaluations += 1
-        print('Iter [{0}], Time [{1} secs], Max Fitness [{2}]'.format(self.evaluations, round(time.time() - t0),
-                                                                      max_fitness))
 
 
 def evaluate(attributes):
@@ -75,7 +74,9 @@ def main():
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
     regulation_factory = PhasedComplexityRegulation(config)
-    population = Population(reproduction_factory, speciation_factory, regulation_factory)
+    reporting_factory = reporter.Reporter()
+    reporting_factory.add_report(stdout.StdOut())
+    population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
     population.fit()

@@ -7,6 +7,7 @@ from evolving_networks.neat.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.neat.population import Population
 from evolving_networks.neat.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.regulations.blended import Blended as BlendedComplexityRegulation
+from evolving_networks.reporting import reporter, stdout
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
 # 2-input XOR inputs and expected outputs.
@@ -19,7 +20,9 @@ def main():
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
     regulation_factory = BlendedComplexityRegulation(config)
-    population = Population(reproduction_factory, speciation_factory, regulation_factory)
+    reporting_factory = reporter.Reporter()
+    reporting_factory.add_report(stdout.StdOut())
+    population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     population.initialize(evaluate, config)
     history = population.fit()
     print(population.best_genome)
