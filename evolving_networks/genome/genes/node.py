@@ -6,6 +6,7 @@
 [1] http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
 
 """
+import json
 import random
 
 import numpy as np
@@ -26,10 +27,38 @@ class Node(Gene):
         self.activation = activation
         self.aggregation = aggregation
 
+    def to_json(self):
+        result = dict()
+        result['id'] = self.id
+        result['type'] = self.type
+        result['bias'] = self.bias
+        result['response'] = self.response
+        result['activation'] = self.activation
+        result['aggregation'] = self.aggregation
+        return json.dumps(result)
+
+    def from_json(self, node_json):
+        result = json.loads(node_json)
+        self.id = result['id']
+        self.type = result['type']
+        self.bias = result['bias']
+        self.response = result['response']
+        self.activation = result['activation']
+        self.aggregation = result['aggregation']
+
     def __str__(self):
         attributes = ['id', 'type', 'bias', 'response', 'activation', 'aggregation']
         attrib = ['{0}={1}'.format(a, getattr(self, a)) for a in attributes]
         return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
+
+    def __eq__(self, other):
+        c1 = self.id == other.id
+        c2 = self.type = other.type
+        c3 = self.bias == other.bias
+        c4 = self.response = other.response
+        c5 = self.activation == other.activation
+        c6 = self.aggregation == other.aggregation
+        return c1 and c2 and c3 and c4 and c5 and c6
 
     def initialize(self, config):
         bim = getattr(config, 'bias_init_mean')

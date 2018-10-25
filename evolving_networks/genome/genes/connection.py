@@ -6,6 +6,7 @@
 [1] http://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
 
 """
+import json
 import random
 
 import numpy as np
@@ -36,6 +37,31 @@ class Connection(Gene):
 
     def __ge__(self, other):
         return self.id >= other.id
+
+    def __eq__(self, other):
+        c1 = self.id == other.id
+        c2 = self.source_id == other.source_id
+        c3 = self.target_id == other.target_id
+        c4 = self.weight == other.weight
+        c5 = self.enabled == other.enabled
+        return c1 and c2 and c3 and c4 and c5
+
+    def to_json(self):
+        result = dict()
+        result['id'] = self.id
+        result['source_id'] = self.source_id
+        result['target_id'] = self.target_id
+        result['weight'] = self.weight
+        result['enabled'] = self.enabled
+        return json.dumps(result)
+
+    def from_json(self, connection_json):
+        result = json.loads(connection_json)
+        self.id = result['id']
+        self.source_id = result['source_id']
+        self.target_id = result['target_id']
+        self.weight = result['weight']
+        self.enabled = result['enabled']
 
     def initialize(self, config):
         wit = config.weight_init_type
