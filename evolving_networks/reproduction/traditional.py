@@ -9,16 +9,15 @@
 
 import numpy as np
 
+from evolving_networks.genome.genome import Genome
 from evolving_networks.math_util import probabilistic_round
-from evolving_networks.pytorch.genome.genome import Genome
-from evolving_networks.pytorch.reproduction.factory import Factory
+from evolving_networks.reproduction.factory import Factory
 
 
 class Traditional(Factory):
-    def __init__(self, model_class):
+    def __init__(self):
         super(Traditional, self).__init__()
         self.ancestors = set()
-        self.model_class = model_class
 
     def populate(self, population_size, generation, config):
         population = {}
@@ -26,12 +25,12 @@ class Traditional(Factory):
             member_id = next(self._genome_indexer)
             assert member_id not in self.ancestors
             g = Genome(member_id, generation, config.genome)
-            g.initialize(self.model_class)
+            g.initialize(config.node, config.connection)
             population[member_id] = g
             self.ancestors.add(member_id)
         return population
 
-    def _reproduce_off_springs(self, species, generation, config):
+    def _reproduce_off_springs(self, species, regulation, generation, config):
         off_springs = []
         non_zero_species = 0
         reproduce_probs, species_probs = {}, []
@@ -61,7 +60,7 @@ class Traditional(Factory):
                 assert member_id not in self.ancestors
                 g = Genome(member_id, generation, config.genome)
                 g.crossover_asexual(member_parent_1)
-                g.mutate(config)
+                g.mutate(regulation, config)
                 off_springs.append(g)
 
             inter_species_matings = 0 if non_zero_species == 1 else probabilistic_round(
@@ -83,7 +82,7 @@ class Traditional(Factory):
                 member_id = next(self._genome_indexer)
                 assert member_id not in self.ancestors
                 g = Genome(member_id, generation, config.genome)
-                g.crossover_sexual(member_parent_1, member_parent_2)
+                g.crossover_sexual(member_parent_1, member_parent_2, config)
                 off_springs.append(g)
 
             for _ in range(intra_species_matings):
@@ -93,7 +92,7 @@ class Traditional(Factory):
                     assert member_id not in self.ancestors
                     g = Genome(member_id, generation, config.genome)
                     g.crossover_asexual(member_parent_1)
-                    g.mutate(config)
+                    g.mutate(regulation, config)
                     off_springs.append(g)
                 else:
                     m1_idx = np.random.choice(range(specie.survivors), 1, p=reproduce_probs[s_id])[0]
@@ -106,7 +105,7 @@ class Traditional(Factory):
                         assert member_id not in self.ancestors
                         g = Genome(member_id, generation, config.genome)
                         g.crossover_asexual(member_parent_1)
-                        g.mutate(config)
+                        g.mutate(regulation, config)
                         off_springs.append(g)
                     else:
                         reproduce_probs_revised = reproduce_probs_revised / reproduce_probs_revised_sum
@@ -115,14 +114,14 @@ class Traditional(Factory):
                         member_id = next(self._genome_indexer)
                         assert member_id not in self.ancestors
                         g = Genome(member_id, generation, config.genome)
-                        g.crossover_sexual(member_parent_1, member_parent_2)
+                        g.crossover_sexual(member_parent_1, member_parent_2, config)
                         off_springs.append(g)
 
         return off_springs
 
-    def reproduce(self, species, generation, regulation, population_size, config):
+    def reproduce(self, species, regulation, generation, population_size, config):
         new_population = {}
-        off_springs = self._reproduce_off_springs(species, generation, config)
+        off_springs = self._reproduce_off_springs(species, regulation, generation, config)
 
         for specie in species.values():
             for elite in specie.members[:specie.elites]:

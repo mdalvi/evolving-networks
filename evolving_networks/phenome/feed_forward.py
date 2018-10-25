@@ -1,6 +1,7 @@
-from evolving_networks.neat.phenome.helpers import calc_required_acyclic_depth, calc_neural_acyclic_path
-from evolving_networks.neat.phenome.phenome import Phenome
-from evolving_networks.neat.phenome.proteins.node import Node
+from evolving_networks.phenome.helpers import calc_required_acyclic_depth, calc_neural_acyclic_path
+from evolving_networks.phenome.proteins.node import Node
+
+from evolving_networks.phenome.phenome import Phenome
 
 
 class FeedForwardNetwork(Phenome):

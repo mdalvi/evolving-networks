@@ -1,13 +1,11 @@
-import matplotlib.pyplot as plt
-
 from evolving_networks.activations import Activations
 from evolving_networks.aggregations import Aggregations
-from evolving_networks.neat.configurations.config import Config
-from evolving_networks.neat.phenome.feed_forward import FeedForwardNetwork
-from evolving_networks.neat.population import Population
-from evolving_networks.neat.reproduction.traditional import Traditional as TraditionalReproduction
+from evolving_networks.configurations.config import Config
+from evolving_networks.phenome.feed_forward import FeedForwardNetwork
+from evolving_networks.population import Population
 from evolving_networks.regulations.blended import Blended as BlendedComplexityRegulation
 from evolving_networks.reporting import reporter, stdout
+from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
 # 2-input XOR inputs and expected outputs.
@@ -24,30 +22,8 @@ def main():
     reporting_factory.add_report(stdout.StdOut())
     population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     population.initialize(evaluate, config)
-    history = population.fit()
+    population.fit()
     print(population.best_genome)
-    visualize(population, history)
-
-
-def visualize(population, history):
-    plt.plot(range(population.generation), history.max_fitness, 'r-', label="Max Fitness")
-    plt.plot(range(population.generation), history.mean_fitness, 'r:', label="Mean Fitness")
-    plt.plot(range(population.generation), history.mean_species_fitness, 'b--', label="Mean Species Best")
-    plt.xlabel("Generations")
-    plt.ylabel("Fitness")
-    plt.grid()
-    plt.legend(loc="best")
-    plt.show()
-    plt.close()
-
-    plt.plot(range(population.generation), history.max_complexity, 'g-', label="Max Complexity")
-    plt.plot(range(population.generation), history.mean_complexity, 'g:', label="Mean Complexity")
-    plt.xlabel("Generations")
-    plt.ylabel("Fitness")
-    plt.grid()
-    plt.legend(loc="best")
-    plt.show()
-    plt.close()
 
 
 def evaluate(genomes, config):
