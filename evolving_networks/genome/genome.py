@@ -369,7 +369,7 @@ class Genome(object):
             if num_added == 0:
                 return False
 
-    def crossover_sexual(self, parent_1: __class__, parent_2: __class__, config):
+    def crossover_sexual(self, parent_1, parent_2, config):
         fitness_case = 'unequal'
         if parent_1.adjusted_fitness > parent_2.adjusted_fitness:
             p1, p2 = parent_1, parent_2
