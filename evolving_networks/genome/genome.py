@@ -109,7 +109,7 @@ class Genome(object):
 
         self.nodes = dict()
         for n_id, node_json in result['nodes'].items():
-            n = Node(n_id=None, n_type=None, bias=None, response=None, activation=None, aggregation=None)
+            n = Node()
             n.from_json(node_json)
             self.nodes[int(n_id)] = n
 
@@ -490,14 +490,14 @@ class Genome(object):
                 n = node_set_1[n1_idx]
                 if n1_idx in required_nodes or n.type == 'input' or n.type == 'output':
                     assert n.id not in self.nodes
-                    self._create_node(n.id, n.type, n.bias, n.response, n.activation, n.aggregation)
+                    self._create_node(n.id, n.type, n.bias, n.res, n.act, n.agg)
                     self.node_ids['all'].add(n.id)
                     self.node_ids[n.type].add(n.id)
             elif n1_idx != n2_idx and n2_idx != -1 and n1_idx == -1:
                 n = node_set_2[n2_idx]
                 if n2_idx in required_nodes or n.type == 'input' or n.type == 'output':
                     assert n.id not in self.nodes
-                    self._create_node(n.id, n.type, n.bias, n.response, n.activation, n.aggregation)
+                    self._create_node(n.id, n.type, n.bias, n.res, n.act, n.agg)
                     self.node_ids['all'].add(n.id)
                     self.node_ids[n.type].add(n.id)
             else:
@@ -511,7 +511,7 @@ class Genome(object):
     def crossover_asexual(self, parent):
         for node in parent.nodes.values():
             assert node.id not in self.nodes
-            self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
+            self._create_node(node.id, node.type, node.bias, node.res, node.act, node.agg)
             self.node_ids['all'].add(node.id)
             self.node_ids[node.type].add(node.id)
 
@@ -526,7 +526,7 @@ class Genome(object):
     def clone(self, parent):
         for node in parent.nodes.values():
             assert node.id not in self.nodes
-            self._create_node(node.id, node.type, node.bias, node.response, node.activation, node.aggregation)
+            self._create_node(node.id, node.type, node.bias, node.res, node.act, node.agg)
             self.node_ids['all'].add(node.id)
             self.node_ids[node.type].add(node.id)
 
@@ -665,11 +665,10 @@ class Genome(object):
 
         return connectors
 
-    def _create_node(self, n_id, n_type, bias=None, response=None, activation=None, aggregation=None, config=None):
-        node = Node(n_id, n_type, bias, response, activation, aggregation)
-        if config is not None:
-            node.initialize(config)
-        self.nodes[n_id] = node
+    def _create_node(self, _id, _type, bias=None, res=None, act=None, agg=None, config=None):
+        node = Node()
+        node.initialize(_id, _type, bias, res, act, agg, config)
+        self.nodes[_id] = node
 
     def _create_connection(self, source_id, target_id, weight=None, enabled=None, config=None):
         if (source_id, target_id) in self.__class__.innovation_archive:

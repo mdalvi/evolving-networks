@@ -42,11 +42,11 @@ class RecurrentNetwork(Phenome):
         for n_id in required_nodes:
             # Node gene
             g_node = self.genome.nodes[n_id]
-            activation = activations.get(g_node.activation)
-            aggregation = aggregations.get(g_node.aggregation)
+            act = activations.get(g_node.act)
+            agg = aggregations.get(g_node.agg)
 
             # Node protein
-            p_node = Node(n_id, g_node.type, g_node.bias, g_node.response, activation, aggregation)
+            p_node = Node(n_id, g_node.type, g_node.bias, g_node.res, act, agg)
 
             # A list of incoming weighted signals
             incoming = []

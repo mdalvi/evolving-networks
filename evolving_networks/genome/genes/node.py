@@ -18,83 +18,84 @@ from evolving_networks.math_util import clamp
 
 
 class Node(Gene):
-    def __init__(self, n_id, n_type, bias, response, activation, aggregation):
+    __params = ['id', 'type', 'bias', 'res', 'act', 'agg']
+
+    def __init__(self):
         super(Node, self).__init__()
-        self.id = n_id
-        self.type = n_type
-        self.bias = bias
-        self.response = response
-        self.activation = activation
-        self.aggregation = aggregation
+        self.id = None
+        self.type = None
+        self.bias = None
+        self.res = None
+        self.act = None
+        self.agg = None
 
     def to_json(self):
         result = dict()
-        result['id'] = self.id
-        result['type'] = self.type
-        result['bias'] = self.bias
-        result['response'] = self.response
-        result['activation'] = self.activation
-        result['aggregation'] = self.aggregation
+        for p in self.__params:
+            result[p] = getattr(self, p)
         return json.dumps(result)
 
     def from_json(self, node_json):
         result = json.loads(node_json)
-        self.id = result['id']
-        self.type = result['type']
-        self.bias = result['bias']
-        self.response = result['response']
-        self.activation = result['activation']
-        self.aggregation = result['aggregation']
+        for p in self.__params:
+            setattr(self, p, result[p])
+        return self
 
     def __str__(self):
-        attributes = ['id', 'type', 'bias', 'response', 'activation', 'aggregation']
+        attributes = ['id', 'type', 'bias', 'res', 'act', 'agg']
         attrib = ['{0}={1}'.format(a, getattr(self, a)) for a in attributes]
         return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
 
     def __eq__(self, other):
-        c1 = self.id == other.id
-        c2 = self.type = other.type
-        c3 = self.bias == other.bias
-        c4 = self.response = other.response
-        c5 = self.activation == other.activation
-        c6 = self.aggregation == other.aggregation
-        return c1 and c2 and c3 and c4 and c5 and c6
+        for p in self.__params:
+            if getattr(self, p) != getattr(other, p):
+                return False
+        return True
 
-    def initialize(self, config):
-        bim = getattr(config, 'bias_init_mean')
-        bis = getattr(config, 'bias_init_stdev')
-        bit = getattr(config, 'bias_init_type')
-        bmin = getattr(config, 'bias_min_value')
-        bmax = getattr(config, 'bias_max_value')
+    def initialize(self, _id, _type, bias, res, act, agg, config=None):
 
-        rim = getattr(config, 'response_init_mean')
-        ris = getattr(config, 'response_init_stdev')
-        rit = getattr(config, 'response_init_type')
-        rmin = getattr(config, 'response_min_value')
-        rmax = getattr(config, 'response_max_value')
+        self.id = _id
+        self.type = _type
+        self.bias = bias
+        self.res = res
+        self.act = act
+        self.agg = agg
 
-        if self.type == 'input':
-            self.bias = 0.0
-            self.response = 1.0
-            self.aggregation = 'sum'
-            self.activation = 'identity'
-        else:
-            if bit == 'normal':
-                self.bias = clamp(random_normal(bim, bis), bmin, bmax)
-            elif bit == 'uniform':
-                self.bias = random_uniform(bim, bis, bmin, bmax)
+        if config is not None:
+            bim = config.bias_init_mean
+            bis = config.bias_init_stdev
+            bit = config.bias_init_type
+            bmin = config.bias_min_value
+            bmax = config.bias_max_value
+
+            rim = config.response_init_mean
+            ris = config.response_init_stdev
+            rit = config.response_init_type
+            rmin = config.response_min_value
+            rmax = config.response_max_value
+
+            if self.type == 'input':
+                self.bias = 0.0
+                self.res = 1.0
+                self.agg = 'sum'
+                self.act = 'identity'
             else:
-                raise InvalidConfigurationError()
+                if bit == 'normal':
+                    self.bias = clamp(random_normal(bim, bis), bmin, bmax)
+                elif bit == 'uniform':
+                    self.bias = random_uniform(bim, bis, bmin, bmax)
+                else:
+                    raise InvalidConfigurationError()
 
-            if rit == 'normal':
-                self.response = clamp(random_normal(rim, ris), rmin, rmax)
-            elif rit == 'uniform':
-                self.response = random_uniform(rim, ris, rmin, rmax)
-            else:
-                raise InvalidConfigurationError()
+                if rit == 'normal':
+                    self.res = clamp(random_normal(rim, ris), rmin, rmax)
+                elif rit == 'uniform':
+                    self.res = random_uniform(rim, ris, rmin, rmax)
+                else:
+                    raise InvalidConfigurationError()
 
-            self.aggregation = config.aggregation_default
-            self.activation = config.activation_default_output if self.type == 'output' else config.activation_default
+                self.agg = config.aggregation_default
+                self.act = config.activation_default_output if self.type == 'output' else config.activation_default
 
     def crossover(self, other_node):
         assert self.id == other_node.id  # [1][106,109]
@@ -102,20 +103,21 @@ class Node(Gene):
 
         if random.random() < 0.5:
             bias = self.bias
-            response = self.response
-            activation = self.activation
-            aggregation = self.aggregation
+            res = self.res
+            act = self.act
+            agg = self.agg
         else:
             bias = other_node.bias
-            response = other_node.response
-            activation = other_node.activation
-            aggregation = other_node.aggregation
-        node = self.__class__(self.id, self.type, bias, response, activation, aggregation)
+            res = other_node.res
+            act = other_node.act
+            agg = other_node.agg
+        node = self.__class__()
+        node.initialize(self.id, self.type, bias, res, act, agg)
         return node
 
     def mutate(self, config):
 
-        assert self.type != 'input'
+        assert (self.type != 'input')
 
         bmr = config.bias_mutate_rate
         bms = config.bias_mutate_stdev
@@ -159,13 +161,13 @@ class Node(Gene):
                         raise InvalidConfigurationError()
                     success = True
                 elif mut_idx == 2:
-                    self.response = clamp(self.response + random_normal(0.0, rms), rmin, rmax)
+                    self.res = clamp(self.res + random_normal(0.0, rms), rmin, rmax)
                     success = True
                 elif mut_idx == 3:
                     if rit == 'normal':
-                        self.response = clamp(random_normal(rim, ris), rmin, rmax)
+                        self.res = clamp(random_normal(rim, ris), rmin, rmax)
                     elif rit == 'uniform':
-                        self.response = random_uniform(rim, ris, rmin, rmax)
+                        self.res = random_uniform(rim, ris, rmin, rmax)
                     else:
                         raise InvalidConfigurationError()
                     success = True
@@ -173,17 +175,17 @@ class Node(Gene):
                     nb_activations = len(act_opt)
                     if self.type != 'input' and self.type != 'output' and nb_activations > 1:
                         choices = list(range(nb_activations))
-                        choices.remove(act_opt.index(self.activation))
+                        choices.remove(act_opt.index(self.act))
                         choice_idx = random.choice(choices)
-                        self.activation = act_opt[choice_idx]
+                        self.act = act_opt[choice_idx]
                         success = True
                 else:
                     nb_aggregations = len(agg_opt)
                     if nb_aggregations > 1:
                         choices = list(range(nb_aggregations))
-                        choices.remove(agg_opt.index(self.aggregation))
+                        choices.remove(agg_opt.index(self.agg))
                         choice_idx = random.choice(choices)
-                        self.aggregation = agg_opt[choice_idx]
+                        self.agg = agg_opt[choice_idx]
                         success = True
 
                 if success is True:
@@ -205,13 +207,13 @@ class Node(Gene):
                     raise InvalidConfigurationError()
 
             if random.random() < rmr:
-                self.response = clamp(self.response + random_normal(0.0, rms), rmin, rmax)
+                self.res = clamp(self.res + random_normal(0.0, rms), rmin, rmax)
 
             if random.random() < rrr:
                 if rit == 'normal':
-                    self.response = clamp(random_normal(rim, ris), rmin, rmax)
+                    self.res = clamp(random_normal(rim, ris), rmin, rmax)
                 elif rit == 'uniform':
-                    self.response = random_uniform(rim, ris, rmin, rmax)
+                    self.res = random_uniform(rim, ris, rmin, rmax)
                 else:
                     raise InvalidConfigurationError()
 
@@ -219,14 +221,14 @@ class Node(Gene):
                 nb_activations = len(act_opt)
                 if self.type != 'input' and self.type != 'output' and nb_activations > 1:
                     choices = list(range(nb_activations))
-                    choices.remove(act_opt.index(self.activation))
+                    choices.remove(act_opt.index(self.act))
                     choice_idx = random.choice(choices)
-                    self.activation = act_opt[choice_idx]
+                    self.act = act_opt[choice_idx]
 
             if random.random() < agg_mr:
                 nb_aggregations = len(agg_opt)
                 if nb_aggregations > 1:
                     choices = list(range(nb_aggregations))
-                    choices.remove(agg_opt.index(self.aggregation))
+                    choices.remove(agg_opt.index(self.agg))
                     choice_idx = random.choice(choices)
-                    self.aggregation = agg_opt[choice_idx]
+                    self.agg = agg_opt[choice_idx]

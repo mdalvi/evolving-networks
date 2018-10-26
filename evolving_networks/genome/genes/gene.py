@@ -2,7 +2,7 @@ class Gene(object):
     def __init__(self):
         pass
 
-    def initialize(self, config):
+    def initialize(self, **kwargs):
         raise NotImplementedError()
 
     def crossover(self, other_gene):
