@@ -14,6 +14,7 @@ from itertools import count
 
 import numpy as np
 
+from evolving_networks.configurations.config import DefaultGenomeConfig
 from evolving_networks.errors import InvalidConfigurationError, InvalidConditionalError
 from evolving_networks.genome.genes.connection import Connection
 from evolving_networks.genome.genes.node import Node
@@ -23,7 +24,7 @@ from evolving_networks.math_util import normalize, probabilistic_round
 class Genome(object):
     _params = ['id', '_node_idx_cntr', 'birth_generation', 'fitness', 'adjusted_fitness', 'is_damaged', 'nodes',
                'connections', '_connectors', '_cyclic_connectors', '_acyclic_connectors', 'node_ids',
-               '_innovation_idx_cntr', '_innovation_archive']
+               '_innovation_idx_cntr', '_innovation_archive', 'config']
     _innovation_archive = {}
     _innovation_idx = count(0)
     _innovation_idx_cntr = 0
@@ -93,15 +94,17 @@ class Genome(object):
         result = dict()
         for p in self._params:
             if p == 'nodes':
-                result[p] = {k: v.to_json() for k, v in self.nodes.items()}
+                result[p] = {k: v.to_json() for k, v in getattr(self, p).items()}
             elif p == 'connections':
-                result[p] = {k: v.to_json() for k, v in self.connections.items()}
+                result[p] = {k: v.to_json() for k, v in getattr(self, p).items()}
             elif p in ['_connectors', '_cyclic_connectors', '_acyclic_connectors']:
                 result[p] = list(getattr(self, p))
             elif p == 'node_ids':
-                result[p] = {k: list(v) for k, v in self.node_ids.items()}
+                result[p] = {k: list(v) for k, v in getattr(self, p).items()}
             elif p == '_innovation_archive':
-                result[p] = [{'k': list(k), 'v': v} for k, v in self._innovation_archive.items()]
+                result[p] = [{'k': list(k), 'v': v} for k, v in getattr(self, p).items()]
+            elif p == 'config':
+                result[p] = getattr(self, p).to_json()
             else:
                 result[p] = getattr(self, p)
         return json.dumps(result)
@@ -119,6 +122,8 @@ class Genome(object):
                 setattr(self, p, {k: set(v) for k, v in result[p].items()})
             elif p == '_innovation_archive':
                 setattr(self, p, {tuple(val['k']): val['v'] for val in result[p]})
+            elif p == 'config':
+                setattr(self, p, DefaultGenomeConfig().from_json(result[p]))
             else:
                 setattr(self, p, result[p])
         self._node_idx = count(self._node_idx_cntr + 1)
