@@ -10,7 +10,7 @@ class Blended(Factory):
         self.node_delete_rate = config.genome.node_delete_rate
         self.conn_delete_rate = config.genome.conn_delete_rate
 
-    def determine_mode(self, statistics):
+    def determine_mode(self, **kwargs):
         pass
 
     def __str__(self):

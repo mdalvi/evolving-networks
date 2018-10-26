@@ -1,54 +1,5 @@
-import time
-
-from tabulate import tabulate
-
-from evolving_networks.math_util import stat_functions, normalize, mean
-
-
-class Statistics(object):
-    def __init__(self):
-        self.generation = 0
-        self.current_best = None
-        self.best_fitness = float('-Infinity')
-
-        self.max_fitness = []
-        self.mean_fitness = []
-        self.stdev_fitness = []
-        self.max_complexity = []
-        self.mean_complexity = []
-        self.stdev_complexity = []
-        self.mean_species_fitness = []
-        self.stdev_species_fitness = []
-        self.elapsed_generation_time = []
-
-    @property
-    def mean_complexity_ma(self):
-        if len(self.mean_complexity) == 0:
-            return 0.0
-        return mean(self.mean_complexity[-100:])
-
-    def describe_stats(self, speciation, regulation, members_complexity, generation):
-        self.mean_complexity.append(mean(members_complexity))
-        self.generation = generation
-
-        species_details = {'Id': [], 'Size': [], 'Fitness': [], 'AdjFitness': []}
-        for s_id, specie in speciation.species.items():
-            species_details['Id'].append(s_id)
-            species_details['Size'].append(len(specie))
-            species_details['Fitness'].append(specie.fitness)
-            species_details['AdjFitness'].append(specie.adjusted_fitness)
-
-        if speciation.best_genome.fitness > self.best_fitness:
-            self.best_fitness = speciation.best_genome.fitness
-        self.current_best = speciation.best_genome
-
-        print("\nTotal number of species {0}".format(len(speciation.species)))
-        print("Best fitness {0}".format(self.best_fitness))
-        print("Current best fitness {0} @ complexity {1}".format(self.current_best.fitness,
-                                                                 self.current_best.complexity))
-
-        print(tabulate(species_details, headers="keys", numalign="right"))
-        print(str(regulation))
+from evolving_networks.math_util import mean
+from evolving_networks.math_util import stat_functions, normalize
 
 
 class Population(object):
@@ -65,8 +16,6 @@ class Population(object):
         self.population_size = 0
         self.fitness_function = None
         self.fitness_criterion = None
-
-        self.statistics = Statistics()
 
     def initialize(self, fitness_function, config):
         self.config = config
@@ -112,7 +61,6 @@ class Population(object):
         k = 0
         while n is None or k < n:
             k += 1
-            t0 = time.time()
             self.reporter.start_generation(self.generation)
             self.reporter.pre_reproduction()
             self.population = self.reproduction.reproduce(species=self.speciation.species,
@@ -156,16 +104,15 @@ class Population(object):
             self.speciation.sort_specie_genomes()
             self.speciation.calc_best_stats()
             self.speciation.calc_specie_stats(self.generation, self.population_size, self.config)
-            self.reporter.post_speciation()
-
-            self.statistics.describe_stats(self.speciation, self.regulation, members_complexity, self.generation)
+            self.reporter.post_speciation(self.speciation, self.regulation, members_complexity)
 
             if not self.config.neat.no_fitness_termination:
                 fv = self.fitness_criterion(members_fitness)
                 if fv >= self.config.neat.fitness_threshold:
                     break
 
-            self.regulation.determine_mode(self.statistics)
+            self.regulation.determine_mode(mean_complexity=mean(members_complexity), generation=self.generation,
+                                           current_best=self.speciation.best_genome)
             self.reporter.end_generation()
             self.generation += 1
-        return self.statistics
+        return self.best_genome

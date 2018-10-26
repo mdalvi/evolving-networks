@@ -6,7 +6,7 @@ from evolving_networks.configurations.config import Config
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.population import Population
 from evolving_networks.regulations.blended import Blended as BlendedComplexityRegulation
-from evolving_networks.reporting import reporter, stdout
+from evolving_networks.reporting import reporter, stdout, statistics
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
@@ -23,6 +23,7 @@ def main():
     regulation_factory = BlendedComplexityRegulation(config)
     reporting_factory = reporter.Reporter()
     reporting_factory.add_report(stdout.StdOut())
+    reporting_factory.add_report(statistics.Statistics())
     population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     population.initialize(evaluate, config)
     population.fit()

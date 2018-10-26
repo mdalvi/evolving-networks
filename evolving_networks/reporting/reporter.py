@@ -1,35 +1,3 @@
-class Report(object):
-    def __init__(self):
-        pass
-
-    def start_generation(self, generation):
-        pass
-
-    def end_generation(self):
-        pass
-
-    def found_solution(self, best_genome, generation):
-        pass
-
-    def pre_speciation(self):
-        pass
-
-    def post_speciation(self):
-        pass
-
-    def pre_evaluation(self):
-        pass
-
-    def post_evaluation(self):
-        pass
-
-    def pre_reproduction(self):
-        pass
-
-    def post_reproduction(self):
-        pass
-
-
 class Reporter(object):
     def __init__(self):
         self.reporters = []
@@ -56,9 +24,9 @@ class Reporter(object):
         for r in self.reporters:
             r.pre_speciation()
 
-    def post_speciation(self):
+    def post_speciation(self, speciation, regulation, complexity):
         for r in self.reporters:
-            r.post_speciation()
+            r.post_speciation(speciation, regulation, complexity)
 
     def pre_evaluation(self):
         for r in self.reporters:

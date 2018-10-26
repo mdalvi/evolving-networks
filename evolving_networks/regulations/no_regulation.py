@@ -6,7 +6,7 @@ class NoRegulation(Factory):
         super(NoRegulation, self).__init__()
         self.mode = 'no_regulation'
 
-    def determine_mode(self, statistics):
+    def determine_mode(self, **kwargs):
         pass
 
     def __str__(self):

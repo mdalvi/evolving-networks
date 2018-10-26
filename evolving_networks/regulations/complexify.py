@@ -10,7 +10,7 @@ class Complexify(Factory):
         self.node_delete_rate = 0.0
         self.conn_delete_rate = 0.0
 
-    def determine_mode(self, statistics):
+    def determine_mode(self, **kwargs):
         pass
 
     def __str__(self):

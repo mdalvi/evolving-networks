@@ -1,16 +1,16 @@
 import time
 
-from evolving_networks.reporting.reporter import Report
+from evolving_networks.reporting.report import Report
 
 
 class StdOut(Report):
     def __init__(self):
         super(StdOut, self).__init__()
-        self.generation = 0
-        self.generation_start_time = time.time()
-        self.speciation_start_time = time.time()
-        self.evaluation_start_time = time.time()
-        self.reproduction_start_time = time.time()
+        self.generation = None
+        self.generation_start_time = None
+        self.speciation_start_time = None
+        self.evaluation_start_time = None
+        self.reproduction_start_time = None
 
     def start_generation(self, generation):
         self.generation = generation
@@ -27,7 +27,7 @@ class StdOut(Report):
     def pre_speciation(self):
         self.speciation_start_time = time.time()
 
-    def post_speciation(self):
+    def post_speciation(self, speciation, regulation, complexity):
         print("Elapsed speciation time: {0:.2f} sec ".format(time.time() - self.speciation_start_time))
 
     def pre_evaluation(self):

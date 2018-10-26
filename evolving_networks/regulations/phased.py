@@ -31,23 +31,23 @@ class Phased(Factory):  # [1]
         self.fitness_plateau_threshold = config.neat.phase_fitness_plateau_threshold
         self.simplification_generations_threshold = config.neat.phase_simplification_generations_threshold
 
-    def determine_mode(self, statistics):
+    def determine_mode(self, **kwargs):
         if self.mode == 'complexifying':
 
-            if statistics.current_best.fitness > self.best_fitness:
-                self.best_fitness = statistics.current_best.fitness
+            if kwargs['current_best'].fitness > self.best_fitness:
+                self.best_fitness = kwargs['current_best'].fitness
                 self.fitness_plateau = 0
             else:
                 self.fitness_plateau += 1
 
             if self.complexity_ceiling == -1.0:
-                self.complexity_ceiling = statistics.mean_complexity[-1] + self.complexity_threshold
+                self.complexity_ceiling = kwargs['mean_complexity'] + self.complexity_threshold
 
-            condition_1 = statistics.mean_complexity[-1] > self.complexity_ceiling
+            condition_1 = kwargs['mean_complexity'] > self.complexity_ceiling
             condition_2 = self.fitness_plateau >= self.fitness_plateau_threshold
             if condition_1 and condition_2:
                 self.mode = 'simplifying'
-                self.last_transition = statistics.generation
+                self.last_transition = kwargs['generation']
 
                 self.node_add_rate = 0.0
                 self.conn_add_rate = 0.0
@@ -56,15 +56,15 @@ class Phased(Factory):  # [1]
                 self.fitness_plateau = 0
 
         elif self.mode == 'simplifying':
-            condition_1 = statistics.generation - self.last_transition > self.simplification_generations_threshold
-            condition_2 = statistics.mean_complexity[-1] < self.complexity_ceiling
-            # condition_3 = mean(statistics.mean_complexity[-100:]) - statistics.mean_complexity_ma >= 0.0
+            condition_1 = kwargs['generation'] - self.last_transition > self.simplification_generations_threshold
+            condition_2 = kwargs['mean_complexity'] < self.complexity_ceiling
+            # condition_3 = mean(kwargs['mean_complexity[-100:]) - kwargs['mean_complexity_ma >= 0.0
             if condition_1 and condition_2:
                 self.mode = 'complexifying'
-                self.last_transition = statistics.generation
+                self.last_transition = kwargs['generation']
 
                 if self.complexity_type == 'relative':
-                    self.complexity_ceiling = statistics.mean_complexity[-1] + self.complexity_threshold
+                    self.complexity_ceiling = kwargs['mean_complexity'] + self.complexity_threshold
 
                 self.node_add_rate = self.config.genome.node_add_rate
                 self.conn_add_rate = self.config.genome.conn_add_rate

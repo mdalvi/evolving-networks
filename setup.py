@@ -7,9 +7,7 @@ setup(
               'evolving_networks/speciation', 'evolving_networks/configurations', 'evolving_networks/genome',
               'evolving_networks/phenome', 'evolving_networks/reproduction', 'evolving_networks/genome/genes',
               'evolving_networks/phenome/proteins'],
-    install_requires=[
-        'numpy'
-    ],
+    install_requires=['numpy', 'tabulate'],
     url='https://turingequations.com',
     license='GNU GENERAL PUBLIC LICENSE 3',
     author='mdalvi',
