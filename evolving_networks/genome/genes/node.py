@@ -29,6 +29,17 @@ class Node(Gene):
         self.act = None
         self.agg = None
 
+    def __str__(self):
+        attributes = ['id', 'type', 'bias', 'res', 'act', 'agg']
+        attrib = ['{0}={1}'.format(a, getattr(self, a)) for a in attributes]
+        return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
+
+    def __eq__(self, other):
+        for p in self.__params:
+            if getattr(self, p) != getattr(other, p):
+                return False
+        return True
+
     def to_json(self):
         result = dict()
         for p in self.__params:
@@ -41,19 +52,7 @@ class Node(Gene):
             setattr(self, p, result[p])
         return self
 
-    def __str__(self):
-        attributes = ['id', 'type', 'bias', 'res', 'act', 'agg']
-        attrib = ['{0}={1}'.format(a, getattr(self, a)) for a in attributes]
-        return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
-
-    def __eq__(self, other):
-        for p in self.__params:
-            if getattr(self, p) != getattr(other, p):
-                return False
-        return True
-
     def initialize(self, _id, _type, bias, res, act, agg, config=None):
-
         self.id = _id
         self.type = _type
         self.bias = bias

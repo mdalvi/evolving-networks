@@ -18,13 +18,15 @@ from evolving_networks.math_util import clamp, normalize
 
 
 class Connection(Gene):
-    def __init__(self, c_id, source_id, target_id, weight, enabled):
+    __params = ['id', 'source_id', 'target_id', 'weight', 'enabled']
+
+    def __init__(self):
         super(Connection, self).__init__()
-        self.id = c_id
-        self.source_id = source_id
-        self.target_id = target_id
-        self.weight = weight
-        self.enabled = enabled
+        self.id = None
+        self.source_id = None
+        self.target_id = None
+        self.weight = None
+        self.enabled = None
 
     def __lt__(self, other):
         return self.id < other.id
@@ -39,45 +41,45 @@ class Connection(Gene):
         return self.id >= other.id
 
     def __eq__(self, other):
-        c1 = self.id == other.id
-        c2 = self.source_id == other.source_id
-        c3 = self.target_id == other.target_id
-        c4 = self.weight == other.weight
-        c5 = self.enabled == other.enabled
-        return c1 and c2 and c3 and c4 and c5
+        for p in self.__params:
+            if getattr(self, p) != getattr(other, p):
+                return False
+        return True
 
     def to_json(self):
         result = dict()
-        result['id'] = self.id
-        result['source_id'] = self.source_id
-        result['target_id'] = self.target_id
-        result['weight'] = self.weight
-        result['enabled'] = self.enabled
+        for p in self.__params:
+            result[p] = getattr(self, p)
         return json.dumps(result)
 
-    def from_json(self, connection_json):
-        result = json.loads(connection_json)
-        self.id = result['id']
-        self.source_id = result['source_id']
-        self.target_id = result['target_id']
-        self.weight = result['weight']
-        self.enabled = result['enabled']
+    def from_json(self, node_json):
+        result = json.loads(node_json)
+        for p in self.__params:
+            setattr(self, p, result[p])
+        return self
 
-    def initialize(self, config):
-        wit = config.weight_init_type
-        wim = config.weight_init_mean
-        wis = config.weight_init_stdev
-        wmin = config.weight_min_value
-        wmax = config.weight_max_value
+    def initialize(self, _id, source_id, target_id, weight, enabled, config=None):
+        self.id = _id
+        self.source_id = source_id
+        self.target_id = target_id
+        self.weight = weight
+        self.enabled = enabled
 
-        if wit == 'normal':
-            self.weight = clamp(random_normal(wim, wis), wmin, wmax)
-        elif wit == 'uniform':
-            self.weight = random_uniform(wim, wis, wmin, wmax)
-        else:
-            raise InvalidConfigurationError()
+        if config is not None:
+            wit = config.weight_init_type
+            wim = config.weight_init_mean
+            wis = config.weight_init_stdev
+            wmin = config.weight_min_value
+            wmax = config.weight_max_value
 
-        self.enabled = config.enabled_default
+            if wit == 'normal':
+                self.weight = clamp(random_normal(wim, wis), wmin, wmax)
+            elif wit == 'uniform':
+                self.weight = random_uniform(wim, wis, wmin, wmax)
+            else:
+                raise InvalidConfigurationError()
+
+            self.enabled = config.enabled_default
 
     def __str__(self):
         attributes = ['id', 'source_id', 'target_id', 'weight', 'enabled']
@@ -101,7 +103,8 @@ class Connection(Gene):
         else:
             weight = other_connection.weight
             enabled = other_connection.enabled
-        connection = self.__class__(self.id, self.source_id, self.target_id, weight, enabled)
+        connection = self.__class__()
+        connection.initialize(self.id, self.source_id, self.target_id, weight, enabled)
         return connection
 
     def mutate(self, config):

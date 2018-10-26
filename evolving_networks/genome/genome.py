@@ -672,15 +672,14 @@ class Genome(object):
 
     def _create_connection(self, source_id, target_id, weight=None, enabled=None, config=None):
         if (source_id, target_id) in self.__class__.innovation_archive:
-            c_id = self.__class__.innovation_archive[(source_id, target_id)]
+            _id = self.__class__.innovation_archive[(source_id, target_id)]
         else:
-            c_id = next(self.__class__._innovation_indexer)
-            self._innovation_indexer_cntr = c_id
-            self.__class__.innovation_archive[(source_id, target_id)] = c_id
+            _id = next(self.__class__._innovation_indexer)
+            self._innovation_indexer_cntr = _id
+            self.__class__.innovation_archive[(source_id, target_id)] = _id
 
-        assert c_id not in self.connections
-        connection = Connection(c_id, source_id, target_id, weight, enabled)
-        if config is not None:
-            connection.initialize(config)
-        self.connections[c_id] = connection
+        assert (_id not in self.connections)
+        connection = Connection()
+        connection.initialize(_id, source_id, target_id, weight, enabled, config)
+        self.connections[_id] = connection
         self._connectors.add((source_id, target_id))
