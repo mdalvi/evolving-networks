@@ -28,7 +28,7 @@ class ConfigParameter(object):
 
 
 class Config(object):
-    __params = ['neat', 'node', 'connection', 'genome', 'species', 'reproduction']
+    _params = ['neat', 'node', 'connection', 'genome', 'species', 'reproduction']
 
     def __init__(self):
         self.neat = None
@@ -78,14 +78,14 @@ class Config(object):
         self.reproduction = DefaultReproductionConfig(config_parser)
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p) != getattr(other, p):
                 return False
         return True
 
     def to_json(self):
         result = dict()
-        for p in self.__params:
+        for p in self._params:
             result[p] = getattr(self, p).to_json()
         return json.dumps(result)
 
@@ -106,25 +106,26 @@ class Config(object):
                 setattr(self, k, DefaultReproductionConfig().from_json(v))
             else:
                 raise InvalidConfigurationError()
+        return self
 
 
 class DefaultReproductionConfig(object):
-    __params = [ConfigParameter('species_elitism', int)]
+    _params = [ConfigParameter('species_elitism', int)]
 
     def __init__(self, config_parser=None):
         if config_parser is not None:
-            for parameter in self.__params:
+            for parameter in self._params:
                 setattr(self, parameter.name, parameter.parse('DefaultReproduction', config_parser))
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p.name) != getattr(other, p.name):
                 return False
         return True
 
     def to_json(self):
         result = {}
-        for p in self.__params:
+        for p in self._params:
             result[p.name] = getattr(self, p.name)
         return json.dumps(result)
 
@@ -136,25 +137,25 @@ class DefaultReproductionConfig(object):
 
 
 class DefaultSpeciesConfig(object):
-    __params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
-                ConfigParameter('max_stagnation', int), ConfigParameter('elitism', float),
-                ConfigParameter('off_spring_asexual_rate', float), ConfigParameter('survivor_rate', float),
-                ConfigParameter('inter_species_mating_rate', float), ConfigParameter('specie_clusters', int)]
+    _params = [ConfigParameter('compatibility_threshold', float), ConfigParameter('fitness_criterion', str),
+               ConfigParameter('max_stagnation', int), ConfigParameter('elitism', float),
+               ConfigParameter('off_spring_asexual_rate', float), ConfigParameter('survivor_rate', float),
+               ConfigParameter('inter_species_mating_rate', float), ConfigParameter('specie_clusters', int)]
 
     def __init__(self, config_parser=None):
         if config_parser is not None:
-            for parameter in self.__params:
+            for parameter in self._params:
                 setattr(self, parameter.name, parameter.parse('DefaultSpecies', config_parser))
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p.name) != getattr(other, p.name):
                 return False
         return True
 
     def to_json(self):
         result = {}
-        for p in self.__params:
+        for p in self._params:
             result[p.name] = getattr(self, p.name)
         return json.dumps(result)
 
@@ -166,30 +167,30 @@ class DefaultSpeciesConfig(object):
 
 
 class DefaultGenomeConfig(object):
-    __params = [ConfigParameter('num_inputs', int), ConfigParameter('num_hidden', int),
-                ConfigParameter('num_outputs', int), ConfigParameter('initial_connection', str),
-                ConfigParameter('partial_connection_rate', float), ConfigParameter('feed_forward', bool),
-                ConfigParameter('node_add_rate', float), ConfigParameter('node_delete_rate', float),
-                ConfigParameter('conn_add_rate', float), ConfigParameter('conn_delete_rate', float),
-                ConfigParameter('single_structural_mutation', bool),
-                ConfigParameter('compatibility_disjoint_contribution', float),
-                ConfigParameter('compatibility_excess_contribution', float),
-                ConfigParameter('compatibility_weight_contribution', float)]
+    _params = [ConfigParameter('num_inputs', int), ConfigParameter('num_hidden', int),
+               ConfigParameter('num_outputs', int), ConfigParameter('initial_connection', str),
+               ConfigParameter('partial_connection_rate', float), ConfigParameter('feed_forward', bool),
+               ConfigParameter('node_add_rate', float), ConfigParameter('node_delete_rate', float),
+               ConfigParameter('conn_add_rate', float), ConfigParameter('conn_delete_rate', float),
+               ConfigParameter('single_structural_mutation', bool),
+               ConfigParameter('compatibility_disjoint_contribution', float),
+               ConfigParameter('compatibility_excess_contribution', float),
+               ConfigParameter('compatibility_weight_contribution', float)]
 
     def __init__(self, config_parser=None):
         if config_parser is not None:
-            for parameter in self.__params:
+            for parameter in self._params:
                 setattr(self, parameter.name, parameter.parse('DefaultGenome', config_parser))
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p.name) != getattr(other, p.name):
                 return False
         return True
 
     def to_json(self):
         result = {}
-        for p in self.__params:
+        for p in self._params:
             result[p.name] = getattr(self, p.name)
         return json.dumps(result)
 
@@ -201,27 +202,27 @@ class DefaultGenomeConfig(object):
 
 
 class DefaultConnectionConfig(object):
-    __params = [ConfigParameter('weight_mutate_rate', float), ConfigParameter('weight_mutate_stdev', float),
-                ConfigParameter('weight_replace_rate', float), ConfigParameter('enabled_default', bool),
-                ConfigParameter('enabled_mutate_rate', float), ConfigParameter('weight_init_mean', float),
-                ConfigParameter('weight_init_stdev', float), ConfigParameter('weight_init_type', str),
-                ConfigParameter('weight_min_value', float), ConfigParameter('weight_max_value', float),
-                ConfigParameter('single_structural_mutation', bool)]
+    _params = [ConfigParameter('weight_mutate_rate', float), ConfigParameter('weight_mutate_stdev', float),
+               ConfigParameter('weight_replace_rate', float), ConfigParameter('enabled_default', bool),
+               ConfigParameter('enabled_mutate_rate', float), ConfigParameter('weight_init_mean', float),
+               ConfigParameter('weight_init_stdev', float), ConfigParameter('weight_init_type', str),
+               ConfigParameter('weight_min_value', float), ConfigParameter('weight_max_value', float),
+               ConfigParameter('single_structural_mutation', bool)]
 
     def __init__(self, config_parser=None):
         if config_parser is not None:
-            for parameter in self.__params:
+            for parameter in self._params:
                 setattr(self, parameter.name, parameter.parse('DefaultConnection', config_parser))
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p.name) != getattr(other, p.name):
                 return False
         return True
 
     def to_json(self):
         result = {}
-        for p in self.__params:
+        for p in self._params:
             result[p.name] = getattr(self, p.name)
         return json.dumps(result)
 
@@ -233,33 +234,33 @@ class DefaultConnectionConfig(object):
 
 
 class DefaultNodeConfig(object):
-    __params = [ConfigParameter('bias_mutate_rate', float), ConfigParameter('bias_mutate_stdev', float),
-                ConfigParameter('bias_replace_rate', float), ConfigParameter('bias_init_mean', float),
-                ConfigParameter('bias_init_stdev', float), ConfigParameter('bias_init_type', str),
-                ConfigParameter('bias_min_value', float), ConfigParameter('bias_max_value', float),
-                ConfigParameter('response_mutate_rate', float), ConfigParameter('response_mutate_stdev', float),
-                ConfigParameter('response_replace_rate', float), ConfigParameter('response_init_mean', float),
-                ConfigParameter('response_init_stdev', float), ConfigParameter('response_init_type', str),
-                ConfigParameter('response_min_value', float), ConfigParameter('response_max_value', float),
-                ConfigParameter('activation_default', str), ConfigParameter('activation_default_output', str),
-                ConfigParameter('activation_mutate_rate', float), ConfigParameter('activation_options', list),
-                ConfigParameter('aggregation_default', str), ConfigParameter('aggregation_mutate_rate', float),
-                ConfigParameter('aggregation_options', list), ConfigParameter('single_structural_mutation', bool)]
+    _params = [ConfigParameter('bias_mutate_rate', float), ConfigParameter('bias_mutate_stdev', float),
+               ConfigParameter('bias_replace_rate', float), ConfigParameter('bias_init_mean', float),
+               ConfigParameter('bias_init_stdev', float), ConfigParameter('bias_init_type', str),
+               ConfigParameter('bias_min_value', float), ConfigParameter('bias_max_value', float),
+               ConfigParameter('response_mutate_rate', float), ConfigParameter('response_mutate_stdev', float),
+               ConfigParameter('response_replace_rate', float), ConfigParameter('response_init_mean', float),
+               ConfigParameter('response_init_stdev', float), ConfigParameter('response_init_type', str),
+               ConfigParameter('response_min_value', float), ConfigParameter('response_max_value', float),
+               ConfigParameter('activation_default', str), ConfigParameter('activation_default_output', str),
+               ConfigParameter('activation_mutate_rate', float), ConfigParameter('activation_options', list),
+               ConfigParameter('aggregation_default', str), ConfigParameter('aggregation_mutate_rate', float),
+               ConfigParameter('aggregation_options', list), ConfigParameter('single_structural_mutation', bool)]
 
     def __init__(self, config_parser=None):
         if config_parser is not None:
-            for parameter in self.__params:
+            for parameter in self._params:
                 setattr(self, parameter.name, parameter.parse('DefaultNode', config_parser))
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p.name) != getattr(other, p.name):
                 return False
         return True
 
     def to_json(self):
         result = {}
-        for p in self.__params:
+        for p in self._params:
             result[p.name] = getattr(self, p.name)
         return json.dumps(result)
 
@@ -271,27 +272,27 @@ class DefaultNodeConfig(object):
 
 
 class DefaultNEATConfig(object):
-    __params = [ConfigParameter('population_size', int), ConfigParameter('fitness_criterion', str),
-                ConfigParameter('no_fitness_termination', bool), ConfigParameter('fitness_threshold', float),
-                ConfigParameter('phased_complexity_type', str),
-                ConfigParameter('phased_complexity_threshold', float),
-                ConfigParameter('phase_fitness_plateau_threshold', int),
-                ConfigParameter('phase_simplification_generations_threshold', int)]
+    _params = [ConfigParameter('population_size', int), ConfigParameter('fitness_criterion', str),
+               ConfigParameter('no_fitness_termination', bool), ConfigParameter('fitness_threshold', float),
+               ConfigParameter('phased_complexity_type', str),
+               ConfigParameter('phased_complexity_threshold', float),
+               ConfigParameter('phase_fitness_plateau_threshold', int),
+               ConfigParameter('phase_simplification_generations_threshold', int)]
 
     def __init__(self, config_parser=None):
         if config_parser is not None:
-            for parameter in self.__params:
+            for parameter in self._params:
                 setattr(self, parameter.name, parameter.parse('NEAT', config_parser))
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p.name) != getattr(other, p.name):
                 return False
         return True
 
     def to_json(self):
         result = {}
-        for p in self.__params:
+        for p in self._params:
             result[p.name] = getattr(self, p.name)
         return json.dumps(result)
 

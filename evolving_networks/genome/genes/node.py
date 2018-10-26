@@ -18,7 +18,7 @@ from evolving_networks.math_util import clamp
 
 
 class Node(Gene):
-    __params = ['id', 'type', 'bias', 'res', 'act', 'agg']
+    _params = ['id', 'type', 'bias', 'res', 'act', 'agg']
 
     def __init__(self):
         super(Node, self).__init__()
@@ -35,20 +35,20 @@ class Node(Gene):
         return '{0}({1})'.format(self.__class__.__name__, ", ".join(attrib))
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p) != getattr(other, p):
                 return False
         return True
 
     def to_json(self):
         result = dict()
-        for p in self.__params:
+        for p in self._params:
             result[p] = getattr(self, p)
         return json.dumps(result)
 
     def from_json(self, node_json):
         result = json.loads(node_json)
-        for p in self.__params:
+        for p in self._params:
             setattr(self, p, result[p])
         return self
 

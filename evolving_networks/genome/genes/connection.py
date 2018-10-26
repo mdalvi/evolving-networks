@@ -18,7 +18,7 @@ from evolving_networks.math_util import clamp, normalize
 
 
 class Connection(Gene):
-    __params = ['id', 'source_id', 'target_id', 'weight', 'enabled']
+    _params = ['id', 'source_id', 'target_id', 'weight', 'enabled']
 
     def __init__(self):
         super(Connection, self).__init__()
@@ -41,20 +41,20 @@ class Connection(Gene):
         return self.id >= other.id
 
     def __eq__(self, other):
-        for p in self.__params:
+        for p in self._params:
             if getattr(self, p) != getattr(other, p):
                 return False
         return True
 
     def to_json(self):
         result = dict()
-        for p in self.__params:
+        for p in self._params:
             result[p] = getattr(self, p)
         return json.dumps(result)
 
     def from_json(self, node_json):
         result = json.loads(node_json)
-        for p in self.__params:
+        for p in self._params:
             setattr(self, p, result[p])
         return self
 

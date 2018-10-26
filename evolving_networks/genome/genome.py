@@ -21,20 +21,23 @@ from evolving_networks.math_util import normalize, probabilistic_round
 
 
 class Genome(object):
-    innovation_archive = {}
-    _innovation_indexer = count(0)
-    _innovation_indexer_cntr = 0
+    _params = ['id', '_node_idx_cntr', 'birth_generation', 'fitness', 'adjusted_fitness', 'is_damaged', 'nodes',
+               'connections', '_connectors', '_cyclic_connectors', '_acyclic_connectors', 'node_ids',
+               '_innovation_idx_cntr', '_innovation_archive']
+    _innovation_archive = {}
+    _innovation_idx = count(0)
+    _innovation_idx_cntr = 0
 
     def __init__(self, g_id, generation, config):
-        self.node_indexer = count(0)
-        self.node_indexer_cntr = 0
+        self._node_idx = count(0)
+        self._node_idx_cntr = 0
 
         self.id = g_id
         self.config = config
         self.birth_generation = generation
 
-        self.nodes = {}
-        self.connections = {}
+        self.nodes = dict()
+        self.connections = dict()
         self.fitness = 0.0
         self.adjusted_fitness = 0.0
         self.is_damaged = False
@@ -80,68 +83,47 @@ class Genome(object):
             s += "\n\t{0!s}".format(connection)
         return s
 
+    def __eq__(self, other):
+        for p in self._params:
+            if getattr(self, p) != getattr(other, p):
+                return False
+        return True
+
     def to_json(self):
         result = dict()
-        result['id'] = self.id
-        result['node_indexer_cntr'] = self.node_indexer_cntr
-        result['birth_generation'] = self.birth_generation
-        result['fitness'] = self.fitness
-        result['adjusted_fitness'] = self.adjusted_fitness
-        result['is_damaged'] = self.is_damaged
-        result['nodes'] = {k: v.to_json() for k, v in self.nodes.items()}
-        result['connections'] = {k: v.to_json() for k, v in self.connections.items()}
-        result['_connectors'] = list(self._connectors)
-        result['_cyclic_connectors'] = list(self._cyclic_connectors)
-        result['_acyclic_connectors'] = list(self._acyclic_connectors)
-        result['node_ids'] = {k: list(v) for k, v in self.node_ids.items()}
-        result['_innovation_indexer_cntr'] = self._innovation_indexer_cntr
-        result['innovation_archive'] = [{'key': list(k), 'value': v} for k, v in self.innovation_archive.items()]
+        for p in self._params:
+            if p == 'nodes':
+                result[p] = {k: v.to_json() for k, v in self.nodes.items()}
+            elif p == 'connections':
+                result[p] = {k: v.to_json() for k, v in self.connections.items()}
+            elif p in ['_connectors', '_cyclic_connectors', '_acyclic_connectors']:
+                result[p] = list(getattr(self, p))
+            elif p == 'node_ids':
+                result[p] = {k: list(v) for k, v in self.node_ids.items()}
+            elif p == '_innovation_archive':
+                result[p] = [{'k': list(k), 'v': v} for k, v in self._innovation_archive.items()]
+            else:
+                result[p] = getattr(self, p)
         return json.dumps(result)
 
     def from_json(self, genome_json):
         result = json.loads(genome_json)
-        self.id = result['id']
-        self.node_indexer_cntr = result['node_indexer_cntr']
-        self.birth_generation = result['birth_generation']
-        self.fitness = result['fitness']
-        self.adjusted_fitness = result['adjusted_fitness']
-        self.is_damaged = result['is_damaged']
-
-        self.nodes = dict()
-        for n_id, node_json in result['nodes'].items():
-            n = Node()
-            n.from_json(node_json)
-            self.nodes[int(n_id)] = n
-
-        self.connections = dict()
-        for c_id, connection_json in result['connections'].items():
-            c = Connection()
-            c.from_json(connection_json)
-            self.connections[int(c_id)] = c
-
-        self._connectors = set()
-        for c in result['_connectors']:
-            self._connectors.add(tuple(c))
-
-        self._cyclic_connectors = set()
-        for c in result['_cyclic_connectors']:
-            self._cyclic_connectors.add(tuple(c))
-
-        self._acyclic_connectors = set()
-        for c in result['_acyclic_connectors']:
-            self._acyclic_connectors.add(tuple(c))
-
-        self.node_ids = dict()
-        for k, v in result['node_ids'].items():
-            self.node_ids[k] = set(v)
-
-        self.innovation_archive = dict()
-        for ia in result['innovation_archive']:
-            self.innovation_archive[tuple(ia['key'])] = ia['value']
-
-        self._innovation_indexer_cntr = result['_innovation_indexer_cntr']
-        self.node_indexer = count(self.node_indexer_cntr + 1)
-        self._innovation_indexer = count(self._innovation_indexer_cntr + 1)
+        for p in self._params:
+            if p == 'nodes':
+                setattr(self, p, {int(_id): Node().from_json(json_str) for _id, json_str in result[p].items()})
+            elif p == 'connections':
+                setattr(self, p, {int(_id): Connection().from_json(json_str) for _id, json_str in result[p].items()})
+            elif p in ['_connectors', '_cyclic_connectors', '_acyclic_connectors']:
+                setattr(self, p, {tuple(val) for val in result[p]})
+            elif p == 'node_ids':
+                setattr(self, p, {k: set(v) for k, v in result[p].items()})
+            elif p == '_innovation_archive':
+                setattr(self, p, {tuple(val['k']): val['v'] for val in result[p]})
+            else:
+                setattr(self, p, result[p])
+        self._node_idx = count(self._node_idx_cntr + 1)
+        self._innovation_idx = count(self._innovation_idx_cntr + 1)
+        return self
 
     def distance(self, other_genome, config):
         dist = 0.0
@@ -505,8 +487,8 @@ class Genome(object):
 
         self._compute_probable_connectors()
 
-        self.node_indexer = count(max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr) + 1)
-        self.node_indexer_cntr = max(parent_1.node_indexer_cntr, parent_2.node_indexer_cntr)
+        self._node_idx = count(max(parent_1._node_idx_cntr, parent_2._node_idx_cntr) + 1)
+        self._node_idx_cntr = max(parent_1._node_idx_cntr, parent_2._node_idx_cntr)
 
     def crossover_asexual(self, parent):
         for node in parent.nodes.values():
@@ -520,8 +502,8 @@ class Genome(object):
         for connection in parent.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
 
-        self.node_indexer = count(parent.node_indexer_cntr + 1)
-        self.node_indexer_cntr = parent.node_indexer_cntr
+        self._node_idx = count(parent._node_idx_cntr + 1)
+        self._node_idx_cntr = parent._node_idx_cntr
 
     def clone(self, parent):
         for node in parent.nodes.values():
@@ -535,12 +517,12 @@ class Genome(object):
         for connection in parent.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
 
-        self.node_indexer = count(parent.node_indexer_cntr + 1)
-        self.node_indexer_cntr = parent.node_indexer_cntr
+        self._node_idx = count(parent._node_idx_cntr + 1)
+        self._node_idx_cntr = parent._node_idx_cntr
 
     def _next_node_id(self):
-        n_id = next(self.node_indexer)
-        self.node_indexer_cntr = n_id
+        n_id = next(self._node_idx)
+        self._node_idx_cntr = n_id
         assert n_id not in self.nodes
         return n_id
 
@@ -671,12 +653,12 @@ class Genome(object):
         self.nodes[_id] = node
 
     def _create_connection(self, source_id, target_id, weight=None, enabled=None, config=None):
-        if (source_id, target_id) in self.__class__.innovation_archive:
-            _id = self.__class__.innovation_archive[(source_id, target_id)]
+        if (source_id, target_id) in self.__class__._innovation_archive:
+            _id = self.__class__._innovation_archive[(source_id, target_id)]
         else:
-            _id = next(self.__class__._innovation_indexer)
-            self._innovation_indexer_cntr = _id
-            self.__class__.innovation_archive[(source_id, target_id)] = _id
+            _id = next(self.__class__._innovation_idx)
+            self._innovation_idx_cntr = _id
+            self.__class__._innovation_archive[(source_id, target_id)] = _id
 
         assert (_id not in self.connections)
         connection = Connection()
