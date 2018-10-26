@@ -78,12 +78,10 @@ class Config(object):
         self.reproduction = DefaultReproductionConfig(config_parser)
 
     def __eq__(self, other):
-        flag = True
         for p in self.__params:
             if getattr(self, p) != getattr(other, p):
-                flag = False
-                break
-        return flag
+                return False
+        return True
 
     def to_json(self):
         result = dict()
@@ -119,12 +117,10 @@ class DefaultReproductionConfig(object):
                 setattr(self, parameter.name, parameter.parse('DefaultReproduction', config_parser))
 
     def __eq__(self, other):
-        flag = True
         for p in self.__params:
             if getattr(self, p.name) != getattr(other, p.name):
-                flag = False
-                break
-        return flag
+                return False
+        return True
 
     def to_json(self):
         result = {}
@@ -151,12 +147,10 @@ class DefaultSpeciesConfig(object):
                 setattr(self, parameter.name, parameter.parse('DefaultSpecies', config_parser))
 
     def __eq__(self, other):
-        flag = True
         for p in self.__params:
             if getattr(self, p.name) != getattr(other, p.name):
-                flag = False
-                break
-        return flag
+                return False
+        return True
 
     def to_json(self):
         result = {}
@@ -188,12 +182,10 @@ class DefaultGenomeConfig(object):
                 setattr(self, parameter.name, parameter.parse('DefaultGenome', config_parser))
 
     def __eq__(self, other):
-        flag = True
         for p in self.__params:
             if getattr(self, p.name) != getattr(other, p.name):
-                flag = False
-                break
-        return flag
+                return False
+        return True
 
     def to_json(self):
         result = {}
@@ -222,12 +214,10 @@ class DefaultConnectionConfig(object):
                 setattr(self, parameter.name, parameter.parse('DefaultConnection', config_parser))
 
     def __eq__(self, other):
-        flag = True
         for p in self.__params:
             if getattr(self, p.name) != getattr(other, p.name):
-                flag = False
-                break
-        return flag
+                return False
+        return True
 
     def to_json(self):
         result = {}
@@ -262,12 +252,10 @@ class DefaultNodeConfig(object):
                 setattr(self, parameter.name, parameter.parse('DefaultNode', config_parser))
 
     def __eq__(self, other):
-        flag = True
         for p in self.__params:
             if getattr(self, p.name) != getattr(other, p.name):
-                flag = False
-                break
-        return flag
+                return False
+        return True
 
     def to_json(self):
         result = {}
@@ -296,12 +284,10 @@ class DefaultNEATConfig(object):
                 setattr(self, parameter.name, parameter.parse('NEAT', config_parser))
 
     def __eq__(self, other):
-        flag = True
         for p in self.__params:
             if getattr(self, p.name) != getattr(other, p.name):
-                flag = False
-                break
-        return flag
+                return False
+        return True
 
     def to_json(self):
         result = {}
