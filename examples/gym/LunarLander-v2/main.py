@@ -10,51 +10,19 @@
 import concurrent.futures
 
 import gym
-import torch.nn as nn
-import torch.nn.functional as F
 
+from evolving_networks.activations import Activations
+from evolving_networks.aggregations import Aggregations
+from evolving_networks.configurations.config import Config
 from evolving_networks.math_util import mean
-from evolving_networks.pytorch.configurations.config import Config
-from evolving_networks.pytorch.phenome.feed_forward import FeedForwardNetwork
-# from evolving_networks.pytorch.phenome.recurrent import RecurrentNetwork
-from evolving_networks.pytorch.population import Population
-from evolving_networks.pytorch.reproduction.traditional import Traditional as TraditionalReproduction
+from evolving_networks.phenome.feed_forward import FeedForwardNetwork
+from evolving_networks.population import Population
 from evolving_networks.regulations.no_regulation import NoRegulation
-from evolving_networks.reporting import reporter, stdout
+from evolving_networks.reporting import reporter, stdout, statistics
+from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.speciation.traditional_fixed import TraditionalFixed as TraditionalFixedSpeciation
 
 gym.logger.set_level(40)
-
-
-class FeedForwardModel(nn.Module):
-    def __init__(self):
-        super(FeedForwardModel, self).__init__()
-        self.fc1 = nn.Linear(in_features=8, out_features=8)
-        self.fc2 = nn.Linear(in_features=8, out_features=8)
-        self.fc3 = nn.Linear(in_features=8, out_features=4)
-
-    def forward(self, x):
-        fc1_output = F.relu(self.fc1(x))
-        fc2_output = F.relu(self.fc2(fc1_output))
-        fc3_output = F.softmax(self.fc3(fc2_output), dim=0)
-        return fc3_output
-
-
-class RecurrentModel(nn.Module):
-    def __init__(self):
-        super(RecurrentModel, self).__init__()
-        self.rnn = nn.RNN(input_size=8, hidden_size=8, num_layers=1, nonlinearity='relu')
-        self.fc1 = nn.Linear(in_features=8, out_features=4)
-
-        self.hidden = None
-
-    def forward(self, x):
-        rnn_output, self.hidden = self.rnn(x, self.hidden)
-        fc1_output = F.softmax(self.fc1(rnn_output), dim=2)
-        return fc1_output
-
-    def reset(self):
-        self.hidden = None
 
 
 class ParallelEvaluator(object):
@@ -74,7 +42,7 @@ class ParallelEvaluator(object):
 def evaluate(attributes):
     g_id, genome, config = attributes
     network = FeedForwardNetwork(genome, config)
-    network.initialize(FeedForwardModel)
+    network.initialize(Activations(), Aggregations())
 
     fitness = []
     env = gym.make('LunarLander-v2')  # [1], [2]
@@ -96,12 +64,14 @@ def evaluate(attributes):
 
 
 def main():
-    config = Config(filename='config/config_3.ini')
-    reproduction_factory = TraditionalReproduction(FeedForwardModel)
+    config = Config()
+    config.initialize('config/config_1.ini')
+    reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalFixedSpeciation()
     regulation_factory = NoRegulation(config)
     reporting_factory = reporter.Reporter()
     reporting_factory.add_report(stdout.StdOut())
+    reporting_factory.add_report(statistics.Statistics())
     population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
@@ -114,7 +84,7 @@ def main():
         env = gym.make('LunarLander-v2')  # [1]
         env = gym.wrappers.Monitor(env, 'results', force=True)
         network = FeedForwardNetwork(best_genome, config)
-        network.initialize(FeedForwardModel)
+        network.initialize(Activations(), Aggregations())
 
         fitness = []
         for e_idx in range(10):
@@ -135,7 +105,7 @@ def main():
         fitness_reward = mean(fitness)
         print("Examination mean fitness [{}]".format(fitness_reward))
 
-        if fitness_reward >= config.pytorch.fitness_threshold:
+        if fitness_reward >= config.neat.fitness_threshold:
             break
 
 

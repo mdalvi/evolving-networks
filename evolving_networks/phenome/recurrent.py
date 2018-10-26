@@ -1,5 +1,5 @@
-from evolving_networks.neat.phenome.helpers import calc_required_cyclic_depth, calc_neural_cyclic_path
-from evolving_networks.neat.phenome.proteins.node import Node
+from evolving_networks.phenome.helpers import calc_required_cyclic_depth, calc_neural_cyclic_path
+from evolving_networks.phenome.proteins.node import Node
 
 from evolving_networks.phenome.phenome import Phenome
 

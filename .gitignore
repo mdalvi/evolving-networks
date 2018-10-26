@@ -108,3 +108,6 @@ venv.bak/
 
 examples/xor/save/*.*
 !examples/xor/save/*.py
+
+examples/gym/LunarLander-v2/results/*
+examples/gym/MountainCar-v0/results/*

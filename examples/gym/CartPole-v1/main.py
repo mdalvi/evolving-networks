@@ -19,7 +19,7 @@ from evolving_networks.math_util import mean
 from evolving_networks.phenome.feed_forward import FeedForwardNetwork
 from evolving_networks.population import Population
 from evolving_networks.regulations.phased import Phased as PhasedComplexityRegulation
-from evolving_networks.reporting import reporter, stdout
+from evolving_networks.reporting import reporter, stdout, statistics
 from evolving_networks.reproduction.traditional import Traditional as TraditionalReproduction
 from evolving_networks.speciation.traditional import Traditional as TraditionalSpeciation
 
@@ -33,7 +33,6 @@ class ParallelEvaluator(object):
         self.eval_function = eval_function
 
     def evaluate(self, genomes, config):
-        t0 = time.time()
         max_fitness = float('-Infinity')
         process_data = [(g_id, genome, config) for g_id, genome in genomes]
         with concurrent.futures.ProcessPoolExecutor() as executor:  # [1]
@@ -70,12 +69,14 @@ def evaluate(attributes):
 
 
 def main():
-    config = Config(filename='config/config_1.ini')
+    config = Config()
+    config.initialize('config/config_1.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
     regulation_factory = PhasedComplexityRegulation(config)
     reporting_factory = reporter.Reporter()
     reporting_factory.add_report(stdout.StdOut())
+    reporting_factory.add_report(statistics.Statistics())
     population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     parallel_evaluator = ParallelEvaluator(num_workers=4, eval_function=evaluate)
     population.initialize(parallel_evaluator.evaluate, config)
