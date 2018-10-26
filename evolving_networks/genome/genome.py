@@ -115,7 +115,7 @@ class Genome(object):
 
         self.connections = dict()
         for c_id, connection_json in result['connections'].items():
-            c = Connection(c_id=None, source_id=None, target_id=None, weight=None, enabled=None)
+            c = Connection()
             c.from_json(connection_json)
             self.connections[int(c_id)] = c
 
