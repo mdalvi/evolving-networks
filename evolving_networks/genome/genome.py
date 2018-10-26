@@ -22,7 +22,7 @@ from evolving_networks.math_util import normalize, probabilistic_round
 
 
 class Genome(object):
-    _params = ['id', '_node_idx_cntr', 'birth_generation', 'fitness', 'adjusted_fitness', 'is_damaged', 'nodes',
+    _params = ['id', 'node_idx_cntr', 'birth_generation', 'fitness', 'adjusted_fitness', 'is_damaged', 'nodes',
                'connections', '_connectors', '_cyclic_connectors', '_acyclic_connectors', 'node_ids',
                '_innovation_idx_cntr', '_innovation_archive', 'config']
     _innovation_archive = {}
@@ -31,7 +31,7 @@ class Genome(object):
 
     def __init__(self, g_id, generation, config):
         self._node_idx = count(0)
-        self._node_idx_cntr = 0
+        self.node_idx_cntr = 0
 
         self.id = g_id
         self.config = config
@@ -126,7 +126,7 @@ class Genome(object):
                 setattr(self, p, DefaultGenomeConfig().from_json(result[p]))
             else:
                 setattr(self, p, result[p])
-        self._node_idx = count(self._node_idx_cntr + 1)
+        self._node_idx = count(self.node_idx_cntr + 1)
         self._innovation_idx = count(self._innovation_idx_cntr + 1)
         return self
 
@@ -175,7 +175,7 @@ class Genome(object):
 
         dist += (c3 * c_dist)
         dist = (dist / 3.0)
-        assert 0.0 <= dist <= 1.0
+        assert (0.0 <= dist <= 1)
         return dist
 
     def mutate(self, regulation, config):
@@ -186,7 +186,6 @@ class Genome(object):
         conn_delete_rate = regulation.conn_delete_rate
 
         if config.genome.single_structural_mutation:
-            success = False
             mutation_probs = np.array([node_add_rate, node_delete_rate, conn_add_rate, conn_delete_rate])
             while True:
                 mutation_probs = mutation_probs / np.sum(mutation_probs)
@@ -370,7 +369,7 @@ class Genome(object):
             if num_added == 0:
                 return False
 
-    def crossover_sexual(self, parent_1, parent_2, config):
+    def crossover_sexual(self, parent_1: __class__, parent_2: __class__, config):
         fitness_case = 'unequal'
         if parent_1.adjusted_fitness > parent_2.adjusted_fitness:
             p1, p2 = parent_1, parent_2
@@ -492,8 +491,8 @@ class Genome(object):
 
         self._compute_probable_connectors()
 
-        self._node_idx = count(max(parent_1._node_idx_cntr, parent_2._node_idx_cntr) + 1)
-        self._node_idx_cntr = max(parent_1._node_idx_cntr, parent_2._node_idx_cntr)
+        self._node_idx = count(max(parent_1.node_idx_cntr, parent_2.node_idx_cntr) + 1)
+        self.node_idx_cntr = max(parent_1.node_idx_cntr, parent_2.node_idx_cntr)
 
     def crossover_asexual(self, parent):
         for node in parent.nodes.values():
@@ -507,8 +506,8 @@ class Genome(object):
         for connection in parent.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
 
-        self._node_idx = count(parent._node_idx_cntr + 1)
-        self._node_idx_cntr = parent._node_idx_cntr
+        self._node_idx = count(parent.node_idx_cntr + 1)
+        self.node_idx_cntr = parent.node_idx_cntr
 
     def clone(self, parent):
         for node in parent.nodes.values():
@@ -522,12 +521,12 @@ class Genome(object):
         for connection in parent.connections.values():
             self._create_connection(connection.source_id, connection.target_id, connection.weight, connection.enabled)
 
-        self._node_idx = count(parent._node_idx_cntr + 1)
-        self._node_idx_cntr = parent._node_idx_cntr
+        self._node_idx = count(parent.node_idx_cntr + 1)
+        self.node_idx_cntr = parent.node_idx_cntr
 
     def _next_node_id(self):
         n_id = next(self._node_idx)
-        self._node_idx_cntr = n_id
+        self.node_idx_cntr = n_id
         assert n_id not in self.nodes
         return n_id
 
