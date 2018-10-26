@@ -382,8 +382,8 @@ class Genome(object):
             else:
                 p1, p2 = parent_2, parent_1
 
-        connection_set_1 = p1.connections
-        connection_set_2 = p2.connections
+        connection_set_1 = getattr(p1, 'connections')
+        connection_set_2 = getattr(p2, 'connections')
 
         c_list_1 = sorted(list(connection_set_1.keys()))
         c_list_2 = sorted(list(connection_set_2.keys()))
@@ -442,8 +442,8 @@ class Genome(object):
                     required_nodes.add(c.source_id)
                     required_nodes.add(c.target_id)
 
-        node_set_1 = p1.nodes
-        node_set_2 = p2.nodes
+        node_set_1 = getattr(p1, 'nodes')
+        node_set_2 = getattr(p2, 'nodes')
 
         n_list_1 = sorted(list(node_set_1.keys()))
         n_list_2 = sorted(list(node_set_2.keys()))
