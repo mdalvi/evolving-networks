@@ -105,3 +105,6 @@ venv.bak/
 
 # pycharm cache
 .idea/
+
+examples/xor/save/*.*
+!examples/xor/save/*.py

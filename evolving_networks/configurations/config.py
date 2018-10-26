@@ -1,13 +1,14 @@
 import configparser
+import json
 import os
 
 from evolving_networks.errors import InvalidConfigurationError, InvalidConfigurationFile
 
 
 class ConfigParameter(object):
-    def __init__(self, name, type, default=None):
+    def __init__(self, name, _type, default=None):
         self.name = name
-        self.type = type
+        self.type = _type
         self.default = default
 
     def parse(self, section, config_parser):
@@ -27,7 +28,17 @@ class ConfigParameter(object):
 
 
 class Config(object):
-    def __init__(self, filename):
+    __params = ['neat', 'node', 'connection', 'genome', 'species', 'reproduction']
+
+    def __init__(self):
+        self.neat = None
+        self.node = None
+        self.connection = None
+        self.genome = None
+        self.species = None
+        self.reproduction = None
+
+    def initialize(self, filename):
 
         if not os.path.isfile(filename):
             raise InvalidConfigurationFile("NO SUCH CONFIGURATION FILE FOUND [{}]".format(os.path.abspath(filename)))
@@ -66,13 +77,66 @@ class Config(object):
 
         self.reproduction = DefaultReproductionConfig(config_parser)
 
+    def __eq__(self, other):
+        flag = True
+        for p in self.__params:
+            if getattr(self, p) != getattr(other, p):
+                flag = False
+                break
+        return flag
+
+    def to_json(self):
+        result = dict()
+        for p in self.__params:
+            result[p] = getattr(self, p).to_json()
+        return json.dumps(result)
+
+    def from_json(self, config_json):
+        result = json.loads(config_json)
+        for k, v in result.items():
+            if k == 'neat':
+                setattr(self, k, DefaultNEATConfig().from_json(v))
+            elif k == 'node':
+                setattr(self, k, DefaultNodeConfig().from_json(v))
+            elif k == 'connection':
+                setattr(self, k, DefaultConnectionConfig().from_json(v))
+            elif k == 'genome':
+                setattr(self, k, DefaultGenomeConfig().from_json(v))
+            elif k == 'species':
+                setattr(self, k, DefaultSpeciesConfig().from_json(v))
+            elif k == 'reproduction':
+                setattr(self, k, DefaultReproductionConfig().from_json(v))
+            else:
+                raise InvalidConfigurationError()
+
 
 class DefaultReproductionConfig(object):
     __params = [ConfigParameter('species_elitism', int)]
 
-    def __init__(self, config_parser):
-        for parameter in self.__params:
-            setattr(self, parameter.name, parameter.parse('DefaultReproduction', config_parser))
+    def __init__(self, config_parser=None):
+        if config_parser is not None:
+            for parameter in self.__params:
+                setattr(self, parameter.name, parameter.parse('DefaultReproduction', config_parser))
+
+    def __eq__(self, other):
+        flag = True
+        for p in self.__params:
+            if getattr(self, p.name) != getattr(other, p.name):
+                flag = False
+                break
+        return flag
+
+    def to_json(self):
+        result = {}
+        for p in self.__params:
+            result[p.name] = getattr(self, p.name)
+        return json.dumps(result)
+
+    def from_json(self, config_json):
+        result = json.loads(config_json)
+        for k, v in result.items():
+            setattr(self, k, v)
+        return self
 
 
 class DefaultSpeciesConfig(object):
@@ -81,9 +145,30 @@ class DefaultSpeciesConfig(object):
                 ConfigParameter('off_spring_asexual_rate', float), ConfigParameter('survivor_rate', float),
                 ConfigParameter('inter_species_mating_rate', float), ConfigParameter('specie_clusters', int)]
 
-    def __init__(self, config_parser):
-        for parameter in self.__params:
-            setattr(self, parameter.name, parameter.parse('DefaultSpecies', config_parser))
+    def __init__(self, config_parser=None):
+        if config_parser is not None:
+            for parameter in self.__params:
+                setattr(self, parameter.name, parameter.parse('DefaultSpecies', config_parser))
+
+    def __eq__(self, other):
+        flag = True
+        for p in self.__params:
+            if getattr(self, p.name) != getattr(other, p.name):
+                flag = False
+                break
+        return flag
+
+    def to_json(self):
+        result = {}
+        for p in self.__params:
+            result[p.name] = getattr(self, p.name)
+        return json.dumps(result)
+
+    def from_json(self, config_json):
+        result = json.loads(config_json)
+        for k, v in result.items():
+            setattr(self, k, v)
+        return self
 
 
 class DefaultGenomeConfig(object):
@@ -97,9 +182,30 @@ class DefaultGenomeConfig(object):
                 ConfigParameter('compatibility_excess_contribution', float),
                 ConfigParameter('compatibility_weight_contribution', float)]
 
-    def __init__(self, config_parser):
-        for parameter in self.__params:
-            setattr(self, parameter.name, parameter.parse('DefaultGenome', config_parser))
+    def __init__(self, config_parser=None):
+        if config_parser is not None:
+            for parameter in self.__params:
+                setattr(self, parameter.name, parameter.parse('DefaultGenome', config_parser))
+
+    def __eq__(self, other):
+        flag = True
+        for p in self.__params:
+            if getattr(self, p.name) != getattr(other, p.name):
+                flag = False
+                break
+        return flag
+
+    def to_json(self):
+        result = {}
+        for p in self.__params:
+            result[p.name] = getattr(self, p.name)
+        return json.dumps(result)
+
+    def from_json(self, config_json):
+        result = json.loads(config_json)
+        for k, v in result.items():
+            setattr(self, k, v)
+        return self
 
 
 class DefaultConnectionConfig(object):
@@ -110,9 +216,30 @@ class DefaultConnectionConfig(object):
                 ConfigParameter('weight_min_value', float), ConfigParameter('weight_max_value', float),
                 ConfigParameter('single_structural_mutation', bool)]
 
-    def __init__(self, config_parser):
-        for parameter in self.__params:
-            setattr(self, parameter.name, parameter.parse('DefaultConnection', config_parser))
+    def __init__(self, config_parser=None):
+        if config_parser is not None:
+            for parameter in self.__params:
+                setattr(self, parameter.name, parameter.parse('DefaultConnection', config_parser))
+
+    def __eq__(self, other):
+        flag = True
+        for p in self.__params:
+            if getattr(self, p.name) != getattr(other, p.name):
+                flag = False
+                break
+        return flag
+
+    def to_json(self):
+        result = {}
+        for p in self.__params:
+            result[p.name] = getattr(self, p.name)
+        return json.dumps(result)
+
+    def from_json(self, config_json):
+        result = json.loads(config_json)
+        for k, v in result.items():
+            setattr(self, k, v)
+        return self
 
 
 class DefaultNodeConfig(object):
@@ -129,9 +256,30 @@ class DefaultNodeConfig(object):
                 ConfigParameter('aggregation_default', str), ConfigParameter('aggregation_mutate_rate', float),
                 ConfigParameter('aggregation_options', list), ConfigParameter('single_structural_mutation', bool)]
 
-    def __init__(self, config_parser):
-        for parameter in self.__params:
-            setattr(self, parameter.name, parameter.parse('DefaultNode', config_parser))
+    def __init__(self, config_parser=None):
+        if config_parser is not None:
+            for parameter in self.__params:
+                setattr(self, parameter.name, parameter.parse('DefaultNode', config_parser))
+
+    def __eq__(self, other):
+        flag = True
+        for p in self.__params:
+            if getattr(self, p.name) != getattr(other, p.name):
+                flag = False
+                break
+        return flag
+
+    def to_json(self):
+        result = {}
+        for p in self.__params:
+            result[p.name] = getattr(self, p.name)
+        return json.dumps(result)
+
+    def from_json(self, config_json):
+        result = json.loads(config_json)
+        for k, v in result.items():
+            setattr(self, k, v)
+        return self
 
 
 class DefaultNEATConfig(object):
@@ -142,6 +290,27 @@ class DefaultNEATConfig(object):
                 ConfigParameter('phase_fitness_plateau_threshold', int),
                 ConfigParameter('phase_simplification_generations_threshold', int)]
 
-    def __init__(self, config_parser):
-        for parameter in self.__params:
-            setattr(self, parameter.name, parameter.parse('NEAT', config_parser))
+    def __init__(self, config_parser=None):
+        if config_parser is not None:
+            for parameter in self.__params:
+                setattr(self, parameter.name, parameter.parse('NEAT', config_parser))
+
+    def __eq__(self, other):
+        flag = True
+        for p in self.__params:
+            if getattr(self, p.name) != getattr(other, p.name):
+                flag = False
+                break
+        return flag
+
+    def to_json(self):
+        result = {}
+        for p in self.__params:
+            result[p.name] = getattr(self, p.name)
+        return json.dumps(result)
+
+    def from_json(self, config_json):
+        result = json.loads(config_json)
+        for k, v in result.items():
+            setattr(self, k, v)
+        return self

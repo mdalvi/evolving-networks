@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from evolving_networks.activations import Activations
 from evolving_networks.aggregations import Aggregations
 from evolving_networks.configurations.config import Config
@@ -14,7 +16,8 @@ xor_outputs = [(0.0,), (1.0,), (1.0,), (0.0,)]
 
 
 def main():
-    config = Config(filename='config/config_1.ini')
+    config = Config()
+    config.initialize('config/config_1.ini')
     reproduction_factory = TraditionalReproduction()
     speciation_factory = TraditionalSpeciation()
     regulation_factory = BlendedComplexityRegulation(config)
@@ -23,7 +26,12 @@ def main():
     population = Population(reproduction_factory, speciation_factory, regulation_factory, reporting_factory)
     population.initialize(evaluate, config)
     population.fit()
+    best_genome = population.best_genome
+
     print(population.best_genome)
+    filename = 'save/best_solution_{0}.json'.format(datetime.now().strftime('%Y%m%d%H%M%S'))
+    with open(filename, 'w') as f:
+        f.write(best_genome.to_json())
 
 
 def evaluate(genomes, config):

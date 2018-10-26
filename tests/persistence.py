@@ -6,7 +6,8 @@ from evolving_networks.genome.genome import Genome
 
 class TestPersistence(unittest.TestCase):
     def test_genome_persistence(self):
-        config = Config(filename='persistence_config_1.ini')
+        config = Config()
+        config.initialize('persistence_config_1.ini')
         old_g = Genome(g_id=None, generation=None, config=config.genome)
         old_g.initialize(config.node, config.connection)
         old_g_json = old_g.to_json()
@@ -28,8 +29,17 @@ class TestPersistence(unittest.TestCase):
         assert (old_g._cyclic_connectors == new_g._cyclic_connectors)
         assert (old_g._acyclic_connectors == new_g._acyclic_connectors)
 
-        # assert (old_g.node_indexer == new_g.node_indexer)
-        # assert (old_g._innovation_indexer == new_g._innovation_indexer)
+        assert (old_g.node_indexer != new_g.node_indexer)
+        assert (old_g._innovation_indexer != new_g._innovation_indexer)
+
+    def test_config_persistence(self):
+        old_config = Config()
+        old_config.initialize('persistence_config_1.ini')
+        config_json = old_config.to_json()
+        new_config = Config()
+        new_config.from_json(config_json)
+
+        assert (old_config == new_config)
 
 
 if __name__ == '__main__':
