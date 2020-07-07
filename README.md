@@ -1,6 +1,6 @@
 # Evolving Networks
 
-The implementation is an effort to develop NEAT algorithm orginally developed by Kenneth O. Stanley for evolving arbitrary neural networks. 
+The implementation is an effort to develop the NEAT algorithm originally developed by Kenneth O. Stanley for evolving arbitrary neural networks. 
 
 ## References
 
